@@ -1,0 +1,5 @@
+{
+  "name": "Nox",
+  "description": "A dark-themed, local-first Markdown notepad.",
+  "requestFramePermissions": []
+}
