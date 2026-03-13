@@ -4,8 +4,14 @@ import remarkGfm from 'remark-gfm';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note } from '../types';
-import { Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2 } from 'lucide-react';
+import { Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
+
+// Tiptap imports
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import { Markdown } from 'tiptap-markdown';
 
 interface EditorProps {
   note: Note | null;
@@ -14,12 +20,46 @@ interface EditorProps {
 }
 
 export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
-  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [mode, setMode] = useState<'visual' | 'markdown'>('visual');
   const previewRef = useRef<HTMLDivElement>(null);
+  const isUpdatingFromNote = useRef(false);
 
+  // Initialize Tiptap
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Markdown,
+      Placeholder.configure({
+        placeholder: 'Comece a escrever algo incrível...',
+      }),
+    ],
+    content: note?.content || '',
+    onUpdate: ({ editor }) => {
+      if (note && !isUpdatingFromNote.current) {
+        const markdown = (editor.storage as any).markdown.getMarkdown();
+        onUpdateNote(note.id, { content: markdown, updatedAt: Date.now() });
+      }
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-invert prose-zinc max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800 prose-a:text-emerald-400 hover:prose-a:text-emerald-300 prose-img:rounded-xl prose-img:border prose-img:border-zinc-800',
+      },
+    },
+  });
+
+  // Sync Tiptap when note changes
+  useEffect(() => {
+    if (note && editor && note.content !== (editor.storage as any).markdown.getMarkdown()) {
+      isUpdatingFromNote.current = true;
+      editor.commands.setContent(note.content);
+      isUpdatingFromNote.current = false;
+    }
+  }, [note?.id, editor]);
+
+  // Default to visual mode when switching notes
   useEffect(() => {
     if (note) {
-      setMode('edit');
+      setMode('visual');
     }
   }, [note?.id]);
 
@@ -37,7 +77,15 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onUpdateNote(note.id, { content: e.target.value, updatedAt: Date.now() });
+    const newContent = e.target.value;
+    onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
+    
+    // Sync back to Tiptap if in markdown mode
+    if (editor && newContent !== (editor.storage as any).markdown.getMarkdown()) {
+      isUpdatingFromNote.current = true;
+      editor.commands.setContent(newContent);
+      isUpdatingFromNote.current = false;
+    }
   };
 
   const exportTxt = () => {
@@ -68,7 +116,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         </style>
       </head>
       <body>
-        ${previewRef.current?.innerHTML || '<h1>Erro ao gerar HTML</h1>'}
+        ${editor?.getHTML() || '<h1>Erro ao gerar HTML</h1>'}
       </body>
       </html>
     `;
@@ -82,10 +130,10 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   };
 
   const exportPdf = () => {
-    if (!previewRef.current) return;
+    if (!editor) return;
     
     const element = document.createElement('div');
-    element.innerHTML = previewRef.current.innerHTML;
+    element.innerHTML = editor.getHTML();
     element.style.padding = '20px';
     element.style.color = '#000';
     element.style.fontFamily = 'system-ui, sans-serif';
@@ -137,26 +185,26 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         <div className="flex items-center gap-2 ml-4">
           <div className="hidden sm:flex items-center bg-zinc-900 rounded-lg p-1 border border-zinc-800">
             <button
-              onClick={() => setMode('edit')}
+              onClick={() => setMode('visual')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                mode === 'edit'
+                mode === 'visual'
                   ? 'bg-zinc-800 text-zinc-100 shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`}
             >
-              <Edit3 className="w-4 h-4" />
-              Editar
+              <Type className="w-4 h-4" />
+              Visual
             </button>
             <button
-              onClick={() => setMode('preview')}
+              onClick={() => setMode('markdown')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                mode === 'preview'
+                mode === 'markdown'
                   ? 'bg-zinc-800 text-zinc-100 shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`}
             >
-              <Eye className="w-4 h-4" />
-              Visualizar
+              <Code className="w-4 h-4" />
+              Markdown
             </button>
           </div>
 
@@ -186,7 +234,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       </div>
 
       <div className="flex-1 overflow-hidden relative">
-        {mode === 'edit' ? (
+        {mode === 'markdown' ? (
           <textarea
             value={note.content}
             onChange={handleContentChange}
@@ -195,18 +243,8 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
             spellCheck="false"
           />
         ) : (
-          <div 
-            ref={previewRef}
-            className="w-full h-full p-6 overflow-y-auto prose prose-invert prose-zinc max-w-none prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800 prose-a:text-emerald-400 hover:prose-a:text-emerald-300 prose-img:rounded-xl prose-img:border prose-img:border-zinc-800"
-          >
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                img: ({node, ...props}) => <img {...props} referrerPolicy="no-referrer" />
-              }}
-            >
-              {note.content || '*Nenhum conteúdo*'}
-            </ReactMarkdown>
+          <div className="w-full h-full overflow-y-auto">
+            <EditorContent editor={editor} />
           </div>
         )}
       </div>
@@ -214,10 +252,10 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       {/* Mobile mode toggle */}
       <div className="sm:hidden fixed bottom-6 right-6 z-20">
         <button
-          onClick={() => setMode(mode === 'edit' ? 'preview' : 'edit')}
+          onClick={() => setMode(mode === 'visual' ? 'markdown' : 'visual')}
           className="bg-zinc-100 text-zinc-900 p-4 rounded-full shadow-lg shadow-black/50 hover:bg-white transition-colors"
         >
-          {mode === 'edit' ? <Eye className="w-6 h-6" /> : <Edit3 className="w-6 h-6" />}
+          {mode === 'markdown' ? <Type className="w-6 h-6" /> : <Code className="w-6 h-6" />}
         </button>
       </div>
     </div>
