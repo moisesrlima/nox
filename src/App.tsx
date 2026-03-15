@@ -11,6 +11,7 @@ import { Note, INITIAL_NOTE, THEMES, ThemeId } from './types';
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [hasUserTyped, setHasUserTyped] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
@@ -40,6 +41,19 @@ export default function App() {
   // Create dynamic font class based on theme font
   const fontClass = theme.font.toLowerCase().replace(/\s+/g, '-');
   const dynamicFontClass = fontClass === 'source-sans-3' ? 'font-source' : `font-${fontClass}`;
+
+  // Apply theme styles to body for modal backdrop
+  useEffect(() => {
+    Object.entries(themeStyles).forEach(([key, value]) => {
+      document.body.style.setProperty(key, value as string);
+    });
+    
+    return () => {
+      Object.entries(themeStyles).forEach(([key]) => {
+        document.body.style.removeProperty(key);
+      });
+    };
+  }, [themeStyles]);
 
   // Set initial active note
   useEffect(() => {
@@ -125,6 +139,15 @@ export default function App() {
     setIsSidebarOpen(false);
   };
 
+  const handleFirstUserInput = () => {
+    console.log('Debug App: handleFirstUserInput called', { isFirstVisit, hasUserTyped });
+    if (isFirstVisit && !hasUserTyped) {
+      console.log('Debug App: showing welcome modal');
+      setHasUserTyped(true);
+      setShowWelcomeModal(true);
+    }
+  };
+
   const activeNote = notes.find((n) => n.id === activeNoteId) || null;
 
   // Debug: Verificar se há notas e qual é a nota ativa
@@ -163,7 +186,7 @@ export default function App() {
           currentThemeId={currentThemeId}
         />
       </div>
-      {(isFirstVisit || showWelcomeModal) && (
+      {showWelcomeModal && (
         <WelcomeModal 
           isFirstVisit={isFirstVisit}
           onAccept={() => {
@@ -193,6 +216,7 @@ export default function App() {
           note={activeNote}
           onUpdateNote={handleUpdateNote}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onFirstUserInput={handleFirstUserInput}
         />
       </div>
     </div>

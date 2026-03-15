@@ -31,7 +31,7 @@ export function ResetModal({ onConfirm, onCancel }: ResetModalProps) {
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 bg-error hover:bg-error text-white font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-error focus:ring-offset-2 focus:ring-offset-surface"
+            className="flex-1 bg-error hover:bg-error text-text-on-error font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-error focus:ring-offset-2 focus:ring-offset-surface"
           >
             Sim, apagar tudo
           </button>

@@ -1,59 +1,66 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Note } from '../types';
-import { 
-  Bold, Italic, Underline, Link as LinkIcon, 
-  Table, List, Heading1, Heading2, Heading3, Minus,
-  Image, CheckSquare
-} from 'lucide-react';
+import React from 'react';
+import { Type, List, Minus, Table, CheckSquare, Image } from 'lucide-react';
 
-export interface CommandItem {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  command: (editor: any) => void;
-}
-
-export const getSlashCommands = (onSelect: (cmd: string) => void): CommandItem[] => [
-  {
-    title: 'Título 1',
-    description: 'Título de seção grande',
-    icon: <Heading1 className="w-4 h-4" />,
-    command: () => onSelect('h1'),
-  },
-  {
-    title: 'Título 2',
-    description: 'Título de seção média',
-    icon: <Heading2 className="w-4 h-4" />,
-    command: () => onSelect('h2'),
-  },
-  {
-    title: 'Lista',
-    description: 'Lista com marcadores',
-    icon: <List className="w-4 h-4" />,
-    command: () => onSelect('list'),
-  },
-  {
-    title: 'Checklist',
-    description: 'Lista de tarefas',
-    icon: <CheckSquare className="w-4 h-4" />,
-    command: () => onSelect('checklist'),
-  },
-  {
-    title: 'Tabela',
-    description: 'Tabela simples 3x2',
-    icon: <Table className="w-4 h-4" />,
-    command: () => onSelect('table'),
-  },
-  {
-    title: 'Imagem',
-    description: 'Inserir imagem (URL ou Upload)',
-    icon: <Image className="w-4 h-4" />,
-    command: () => onSelect('image'),
-  },
-  {
-    title: 'Divisor',
-    description: 'Linha horizontal',
-    icon: <Minus className="w-4 h-4" />,
-    command: () => onSelect('hr'),
-  },
+export const getSlashCommands = () => [
+    {
+        title: 'Título 1',
+        description: 'Cabeçalho de seção grande.',
+        icon: <Type className="w-5 h-5" />,
+        command: ({ editor, range }) => {
+            editor.chain().focus().deleteRange(range).setHeading({ level: 1 }).run();
+        },
+    },
+    {
+        title: 'Título 2',
+        description: 'Cabeçalho de seção médio.',
+        icon: <Type className="w-5 h-5 opacity-70" />,
+        command: ({ editor, range }) => {
+            editor.chain().focus().deleteRange(range).setHeading({ level: 2 }).run();
+        },
+    },
+    {
+        title: 'Lista',
+        description: 'Crie uma lista com marcadores.',
+        icon: <List className="w-5 h-5" />,
+        command: ({ editor, range }) => {
+            editor.chain().focus().deleteRange(range).toggleBulletList().run();
+        },
+    },
+    {
+        title: 'Divisor',
+        description: 'Separe seções com uma linha.',
+        icon: <Minus className="w-5 h-5" />,
+        command: ({ editor, range }) => {
+            editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+        },
+    },
+    {
+        title: 'Tabela',
+        description: 'Adicione uma tabela simples.',
+        icon: <Table className="w-5 h-5" />,
+        command: ({ editor, range }) => {
+            editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+        },
+    },
+    {
+        title: 'Checklist',
+        description: 'Crie uma lista de tarefas.',
+        icon: <CheckSquare className="w-5 h-5" />,
+        command: ({ editor, range }) => {
+            editor.chain().focus().deleteRange(range).toggleTaskList().run();
+        },
+    },
+    {
+        title: 'Imagem',
+        description: 'Adicione uma imagem por URL.',
+        icon: <Image className="w-5 h-5" />,
+        command: ({ editor, range }) => {
+            const url = window.prompt('URL da imagem:');
+            if (url) {
+                editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
+            } else {
+                editor.chain().focus().deleteRange(range).run();
+            }
+        },
+    },
 ];

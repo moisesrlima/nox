@@ -49,6 +49,55 @@
   font-family: var(--font-source) !important;
 }
 
+/* Custom styles for radio player range input */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: var(--text-muted, #52525b);
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: var(--accent-primary, #10b981);
+  cursor: pointer;
+  margin-top: -4px;
+}
+
+input[type="range"]::-moz-range-track {
+  background: var(--text-muted, #52525b);
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: var(--accent-primary, #10b981);
+  cursor: pointer;
+  border: none;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--bg-primary, #09090b), 0 0 0 4px var(--accent-primary, #10b981);
+}
+
 /* Alternative approach: use CSS custom property directly */
 #root {
   font-family: var(--font-sans) !important;
