@@ -4,16 +4,39 @@ import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
 import { WelcomeModal } from './components/WelcomeModal';
 import { ResetModal } from './components/ResetModal';
+import { SettingsModal } from './components/SettingsModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { Note, INITIAL_NOTE } from './types';
+import { Note, INITIAL_NOTE, THEMES, ThemeId } from './types';
 
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentThemeId, setCurrentThemeId] = useLocalStorage<ThemeId>('nox-theme', 'zinc');
+
+  // Apply theme
+  useEffect(() => {
+    const theme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
+    const root = document.documentElement;
+    
+    root.style.setProperty('--bg-primary', theme.colors.primary);
+    root.style.setProperty('--bg-surface', theme.colors.surface);
+    root.style.setProperty('--bg-hover', theme.colors.hover);
+    root.style.setProperty('--accent-primary', theme.colors.accent);
+    root.style.setProperty('--accent-soft', theme.colors.accentSoft);
+    root.style.setProperty('--text-primary', theme.colors.textPrimary);
+    root.style.setProperty('--text-secondary', theme.colors.textSecondary);
+    root.style.setProperty('--text-muted', theme.colors.textMuted);
+    root.style.setProperty('--border-color', theme.colors.border);
+    root.style.setProperty('--app-font', theme.font);
+    
+    // Update body font
+    document.body.style.fontFamily = theme.font;
+  }, [currentThemeId]);
 
   // Set initial active note
   useEffect(() => {
@@ -102,6 +125,14 @@ export default function App() {
           onCancel={() => setShowResetModal(false)}
         />
       )}
+
+      {showSettingsModal && (
+        <SettingsModal
+          currentThemeId={currentThemeId}
+          onSelectTheme={setCurrentThemeId}
+          onClose={() => setShowSettingsModal(false)}
+        />
+      )}
       
       <Sidebar
         notes={notes}
@@ -116,6 +147,7 @@ export default function App() {
         onImport={handleImport}
         onShowInfo={() => setShowWelcomeModal(true)}
         onResetData={() => setShowResetModal(true)}
+        onOpenThemes={() => setShowSettingsModal(true)}
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
       />

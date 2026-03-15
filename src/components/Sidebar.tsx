@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note } from '../types';
-import { Plus, Search, Download, FileText, Trash2, MoreVertical, Menu, Info, AlertTriangle, Settings, ChevronUp, Upload } from 'lucide-react';
+import { Plus, Search, Download, FileText, Trash2, MoreVertical, Menu, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette } from 'lucide-react';
 
 interface SidebarProps {
   notes: Note[];
@@ -14,6 +14,7 @@ interface SidebarProps {
   onImport: (notes: Note[]) => void;
   onShowInfo: () => void;
   onResetData: () => void;
+  onOpenThemes: () => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
@@ -28,6 +29,7 @@ export function Sidebar({
   onImport,
   onShowInfo,
   onResetData,
+  onOpenThemes,
   isOpen,
   setIsOpen,
 }: SidebarProps) {
@@ -163,6 +165,13 @@ export function Sidebar({
 
           {isSettingsOpen && (
             <div className="mt-2 space-y-1 pl-2 border-l-2 border-zinc-800 ml-2">
+              <button
+                onClick={onOpenThemes}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <Palette className="w-4 h-4 text-emerald-400" />
+                Temas
+              </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"

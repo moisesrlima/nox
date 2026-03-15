@@ -1,3 +1,89 @@
+export type ThemeId = 'zinc' | 'sapphire' | 'olive' | 'copper';
+
+export interface Theme {
+  id: ThemeId;
+  name: string;
+  colors: {
+    primary: string;
+    surface: string;
+    hover: string;
+    accent: string;
+    accentSoft: string;
+    textPrimary: string;
+    textSecondary: string;
+    textMuted: string;
+    border: string;
+  };
+  font: string;
+}
+
+export const THEMES: Theme[] = [
+  {
+    id: 'zinc',
+    name: 'Zinc (Padrão)',
+    colors: {
+      primary: '#09090b',
+      surface: '#18181b',
+      hover: '#27272a',
+      accent: '#10b981', // emerald-500
+      accentSoft: '#ecfdf5',
+      textPrimary: '#f4f4f5',
+      textSecondary: '#a1a1aa',
+      textMuted: '#52525b',
+      border: '#27272a',
+    },
+    font: 'Inter',
+  },
+  {
+    id: 'sapphire',
+    name: 'Sapphire',
+    colors: {
+      primary: '#09090b',
+      surface: '#18181b',
+      hover: '#27272a',
+      accent: '#3C61DD',
+      accentSoft: '#E7EDFE',
+      textPrimary: '#f4f4f5',
+      textSecondary: '#a1a1aa',
+      textMuted: '#52525b',
+      border: '#27272a',
+    },
+    font: 'Inter',
+  },
+  {
+    id: 'olive',
+    name: 'Olive',
+    colors: {
+      primary: '#09090b',
+      surface: '#18181b',
+      hover: '#27272a',
+      accent: '#5A5A43',
+      accentSoft: '#F5F5F1',
+      textPrimary: '#f4f4f5',
+      textSecondary: '#a1a1aa',
+      textMuted: '#52525b',
+      border: '#27272a',
+    },
+    font: 'Manrope',
+  },
+  {
+    id: 'copper',
+    name: 'Copper',
+    colors: {
+      primary: '#09090b',
+      surface: '#18181b',
+      hover: '#27272a',
+      accent: '#402014',
+      accentSoft: '#F9F1E9',
+      textPrimary: '#f4f4f5',
+      textSecondary: '#a1a1aa',
+      textMuted: '#52525b',
+      border: '#27272a',
+    },
+    font: 'Source Sans 3',
+  },
+];
+
 export interface Note {
   id: string;
   title: string;

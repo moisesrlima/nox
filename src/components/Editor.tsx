@@ -1,17 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note } from '../types';
-import { Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code } from 'lucide-react';
+import { 
+  Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
+  Bold, Italic, Underline, Link as LinkIcon, Search
+} from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 // Tiptap imports
 import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
 import { Markdown } from 'tiptap-markdown';
+import { getSlashCommands, CommandItem } from './EditorCommands';
 
 interface EditorProps {
   note: Note | null;
@@ -21,16 +28,87 @@ interface EditorProps {
 
 export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   const [mode, setMode] = useState<'visual' | 'markdown'>('visual');
-  const previewRef = useRef<HTMLDivElement>(null);
+  const [slashMenu, setSlashMenu] = useState<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingFromNote = useRef(false);
 
-  // Initialize Tiptap
+  // Use refs to avoid stale closures in Tiptap handlers
+  const slashMenuRef = useRef(slashMenu);
+  const selectedIndexRef = useRef(selectedIndex);
+  const modeRef = useRef(mode);
+  const commands = getSlashCommands((type) => handleCommandSelect(type));
+  const commandsRef = useRef(commands);
+
+  useEffect(() => { slashMenuRef.current = slashMenu; }, [slashMenu]);
+  useEffect(() => { selectedIndexRef.current = selectedIndex; }, [selectedIndex]);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { commandsRef.current = commands; }, [commands]);
+
+  const handleCommandSelect = (type: string) => {
+    const currentMode = modeRef.current;
+    if (currentMode === 'visual' && editor) {
+      // Remove the slash
+      const { from } = editor.state.selection;
+      editor.commands.deleteRange({ from: from - 1, to: from });
+
+      const normalizedType = type.toLowerCase();
+      switch (normalizedType) {
+        case 'título 1': case 'h1': editor.commands.setHeading({ level: 1 }); break;
+        case 'título 2': case 'h2': editor.commands.setHeading({ level: 2 }); break;
+        case 'lista': case 'list': editor.commands.toggleBulletList(); break;
+        case 'divisor': case 'hr': editor.commands.setHorizontalRule(); break;
+        case 'tabela': case 'table': 
+          editor.commands.insertContent('| Produto | Quantidade | Preço |\n|---------|------------|-------|\n| Maçã    | 10         | R$ 2  |\n| Banana  | 5          | R$ 3  |\n| Laranja | 8          | R$ 4  |');
+          break;
+      }
+    } else if (currentMode === 'markdown' && textareaRef.current) {
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const content = note?.content || '';
+      
+      let snippet = '';
+      const normalizedType = type.toLowerCase();
+      switch (normalizedType) {
+        case 'título 1': case 'h1': snippet = '# '; break;
+        case 'título 2': case 'h2': snippet = '## '; break;
+        case 'lista': case 'list': snippet = '- '; break;
+        case 'divisor': case 'hr': snippet = '\n---\n'; break;
+        case 'tabela': case 'table': snippet = '| Produto | Quantidade | Preço |\n|---------|------------|-------|\n| Maçã    | 10         | R$ 2  |\n| Banana  | 5          | R$ 3  |\n| Laranja | 8          | R$ 4  |'; break;
+      }
+
+      // Replace the slash (which is at start-1)
+      const newContent = content.substring(0, start - 1) + snippet + content.substring(end);
+      onUpdateNote(note!.id, { content: newContent, updatedAt: Date.now() });
+      
+      // Update Tiptap if needed
+      if (editor) {
+        isUpdatingFromNote.current = true;
+        editor.commands.setContent(newContent);
+        isUpdatingFromNote.current = false;
+      }
+    }
+    setSlashMenu(prev => ({ ...prev, active: false }));
+  };
+
+  // Tiptap Editor
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: {
+          openOnClick: false,
+        },
+      }),
       Markdown,
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Placeholder.configure({
-        placeholder: 'Comece a escrever algo incrível...',
+        placeholder: "Digite '/' para comandos...",
       }),
     ],
     content: note?.content || '',
@@ -44,6 +122,43 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       attributes: {
         class: 'prose prose-invert prose-zinc max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800 prose-a:text-emerald-400 hover:prose-a:text-emerald-300 prose-img:rounded-xl prose-img:border prose-img:border-zinc-800',
       },
+      handleKeyDown: (view, event) => {
+        if (event.key === '/') {
+          const { selection } = view.state;
+          const isAtStart = selection.$from.parentOffset === 0;
+          const prevChar = selection.$from.nodeBefore?.textContent?.slice(-1);
+          const isAfterSpace = prevChar === ' ';
+
+          if (isAtStart || isAfterSpace) {
+            const { from } = selection;
+            const coords = view.coordsAtPos(from);
+            setSlashMenu({ x: coords.left, y: coords.bottom + 5, active: true });
+            setSelectedIndex(0);
+            return false;
+          }
+        }
+        
+        if (slashMenuRef.current.active) {
+          if (event.key === 'ArrowDown') {
+            setSelectedIndex(prev => (prev + 1) % commands.length);
+            return true;
+          }
+          if (event.key === 'ArrowUp') {
+            setSelectedIndex(prev => (prev - 1 + commands.length) % commands.length);
+            return true;
+          }
+          if (event.key === 'Enter') {
+            const cmd = commandsRef.current[selectedIndexRef.current];
+            handleCommandSelect(cmd.title);
+            return true;
+          }
+          if (event.key === 'Escape') {
+            setSlashMenu(prev => ({ ...prev, active: false }));
+            return true;
+          }
+        }
+        return false;
+      }
     },
   });
 
@@ -76,16 +191,41 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
     onUpdateNote(note.id, { title: e.target.value, updatedAt: Date.now() });
   };
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
     
-    // Sync back to Tiptap if in markdown mode
+    // Sync back to Tiptap
     if (editor && newContent !== (editor.storage as any).markdown.getMarkdown()) {
       isUpdatingFromNote.current = true;
       editor.commands.setContent(newContent);
       isUpdatingFromNote.current = false;
     }
+
+    // Slash command detection for textarea
+    const cursor = e.target.selectionStart;
+    const lastChar = newContent[cursor - 1];
+    const prevChar = newContent[cursor - 2];
+    const lineStart = newContent.lastIndexOf('\n', cursor - 2) + 1;
+    
+    if (lastChar === '/' && (cursor - 1 === lineStart || prevChar === ' ')) {
+      const rect = e.target.getBoundingClientRect();
+      // Simple approximation for caret position in textarea
+      setSlashMenu({ x: rect.left + 20, y: rect.top + 100, active: true });
+      setSelectedIndex(0);
+    } else if (slashMenu.active) {
+      setSlashMenu(prev => ({ ...prev, active: false }));
+    }
+  };
+
+  const applyMarkdownStyle = (prefix: string, suffix: string = prefix) => {
+    if (!textareaRef.current) return;
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = note.content.substring(start, end);
+    const newContent = note.content.substring(0, start) + prefix + selectedText + suffix + note.content.substring(end);
+    onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
   };
 
   const exportTxt = () => {
@@ -131,14 +271,11 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
 
   const exportPdf = () => {
     if (!editor) return;
-    
     const element = document.createElement('div');
     element.innerHTML = editor.getHTML();
     element.style.padding = '20px';
     element.style.color = '#000';
     element.style.fontFamily = 'system-ui, sans-serif';
-    
-    // Apply basic styles for PDF
     const style = document.createElement('style');
     style.innerHTML = `
       body { color: #000 !important; background: #fff !important; }
@@ -150,20 +287,18 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       th { background-color: #f4f4f4; }
     `;
     element.appendChild(style);
-
     const opt = {
-      margin:       10,
-      filename:     `${note.title || 'nota'}.pdf`,
-      image:        { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+      margin: 10,
+      filename: `${note.title || 'nota'}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
     };
-
     html2pdf().set(opt).from(element).save();
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-zinc-950 overflow-hidden">
+    <div className="flex-1 flex flex-col h-screen bg-zinc-950 overflow-hidden relative">
       <header className="flex-none h-16 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-950/50 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <button
@@ -172,7 +307,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          
           <input
             type="text"
             value={note.title}
@@ -187,24 +321,18 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
             <button
               onClick={() => setMode('visual')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                mode === 'visual'
-                  ? 'bg-zinc-800 text-zinc-100 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                mode === 'visual' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`}
             >
-              <Type className="w-4 h-4" />
-              Visual
+              <Type className="w-4 h-4" /> Visual
             </button>
             <button
               onClick={() => setMode('markdown')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                mode === 'markdown'
-                  ? 'bg-zinc-800 text-zinc-100 shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                mode === 'markdown' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
               }`}
             >
-              <Code className="w-4 h-4" />
-              Markdown
+              <Code className="w-4 h-4" /> Markdown
             </button>
           </div>
 
@@ -234,14 +362,72 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       </div>
 
       <div className="flex-1 overflow-hidden relative">
+        {editor && mode === 'visual' && (
+          <BubbleMenu editor={editor}>
+            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-lg shadow-xl backdrop-blur-md">
+              <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('bold') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+                <Bold className="w-4 h-4" />
+              </button>
+              <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('italic') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+                <Italic className="w-4 h-4" />
+              </button>
+              <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('underline') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+                <Underline className="w-4 h-4" />
+              </button>
+              <div className="w-px h-4 bg-zinc-800 mx-1" />
+              <button onClick={() => {
+                const url = window.prompt('URL:');
+                if (url) editor.chain().focus().setLink({ href: url }).run();
+              }} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('link') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+                <LinkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </BubbleMenu>
+        )}
+
+        {slashMenu.active && (
+          <div 
+            className="fixed z-50 w-64 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl py-2 overflow-hidden"
+            style={{ left: slashMenu.x, top: slashMenu.y }}
+          >
+            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Comandos</div>
+            {commands.map((cmd, i) => (
+              <button
+                key={cmd.title}
+                onClick={() => handleCommandSelect(cmd.title.toLowerCase())}
+                onMouseEnter={() => setSelectedIndex(i)}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${selectedIndex === i ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400'}`}
+              >
+                <div className={`p-1.5 rounded-lg ${selectedIndex === i ? 'bg-zinc-700 text-emerald-400' : 'bg-zinc-800'}`}>
+                  {cmd.icon}
+                </div>
+                <div>
+                  <div className="text-sm font-medium">{cmd.title}</div>
+                  <div className="text-[10px] opacity-60">{cmd.description}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
         {mode === 'markdown' ? (
-          <textarea
-            value={note.content}
-            onChange={handleContentChange}
-            placeholder="Comece a escrever em Markdown..."
-            className="w-full h-full p-6 bg-transparent text-zinc-300 font-mono text-sm leading-relaxed resize-none focus:outline-none placeholder-zinc-700"
-            spellCheck="false"
-          />
+          <div className="w-full h-full relative">
+            {/* Floating toolbar for Markdown mode */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-zinc-900/80 border border-zinc-800 p-1 rounded-lg shadow-xl backdrop-blur-md">
+              <button onClick={() => applyMarkdownStyle('**')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Bold className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('*')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Italic className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('<u>', '</u>')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Underline className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('[', '](url)')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><LinkIcon className="w-4 h-4" /></button>
+            </div>
+            <textarea
+              ref={textareaRef}
+              value={note.content}
+              onChange={handleMarkdownChange}
+              placeholder="Comece a escrever em Markdown..."
+              className="w-full h-full p-16 bg-transparent text-zinc-300 font-mono text-sm leading-relaxed resize-none focus:outline-none placeholder-zinc-700"
+              spellCheck="false"
+            />
+          </div>
         ) : (
           <div className="w-full h-full overflow-y-auto">
             <EditorContent editor={editor} />
@@ -249,7 +435,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         )}
       </div>
       
-      {/* Mobile mode toggle */}
       <div className="sm:hidden fixed bottom-6 right-6 z-20">
         <button
           onClick={() => setMode(mode === 'visual' ? 'markdown' : 'visual')}
