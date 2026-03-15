@@ -1,4 +1,4 @@
-export type ThemeId = 'zinc' | 'sapphire' | 'olive' | 'copper';
+export type ThemeId = 'zinc' | 'sapphire' | 'olive' | 'sakura';
 
 export interface Theme {
   id: ThemeId;
@@ -7,6 +7,7 @@ export interface Theme {
     primary: string;
     surface: string;
     hover: string;
+    active: string;
     accent: string;
     accentSoft: string;
     textPrimary: string;
@@ -25,8 +26,9 @@ export const THEMES: Theme[] = [
       primary: '#09090b',
       surface: '#18181b',
       hover: '#27272a',
-      accent: '#10b981', // emerald-500
-      accentSoft: '#ecfdf5',
+      active: '#3f3f46',
+      accent: '#000000',
+      accentSoft: '#27272a',
       textPrimary: '#f4f4f5',
       textSecondary: '#a1a1aa',
       textMuted: '#52525b',
@@ -38,15 +40,16 @@ export const THEMES: Theme[] = [
     id: 'sapphire',
     name: 'Sapphire',
     colors: {
-      primary: '#09090b',
-      surface: '#18181b',
-      hover: '#27272a',
-      accent: '#3C61DD',
+      primary: '#e7edfe',
+      surface: '#f0f4ff',
+      hover: '#dbe4ff',
+      active: '#c1d0ff',
+      accent: '#3c61dd',
       accentSoft: '#E7EDFE',
-      textPrimary: '#f4f4f5',
-      textSecondary: '#a1a1aa',
-      textMuted: '#52525b',
-      border: '#27272a',
+      textPrimary: '#0f172a',
+      textSecondary: '#1e293b',
+      textMuted: '#64748b',
+      border: '#e2e8f0',
     },
     font: 'Inter',
   },
@@ -54,33 +57,35 @@ export const THEMES: Theme[] = [
     id: 'olive',
     name: 'Olive',
     colors: {
-      primary: '#09090b',
-      surface: '#18181b',
-      hover: '#27272a',
-      accent: '#5A5A43',
+      primary: '#f5f5f1',
+      surface: '#fafaf8',
+      hover: '#f0f0e8',
+      active: '#e8e8e0',
+      accent: '#5a5a43',
       accentSoft: '#F5F5F1',
-      textPrimary: '#f4f4f5',
-      textSecondary: '#a1a1aa',
-      textMuted: '#52525b',
-      border: '#27272a',
+      textPrimary: '#161814',
+      textSecondary: '#2d3029',
+      textMuted: '#8a8f7d',
+      border: '#e8e8e0',
     },
     font: 'Manrope',
   },
   {
-    id: 'copper',
-    name: 'Copper',
+    id: 'sakura',
+    name: 'Sakura',
     colors: {
-      primary: '#09090b',
-      surface: '#18181b',
-      hover: '#27272a',
-      accent: '#402014',
-      accentSoft: '#F9F1E9',
-      textPrimary: '#f4f4f5',
-      textSecondary: '#a1a1aa',
-      textMuted: '#52525b',
-      border: '#27272a',
+      primary: '#F4C6CF',
+      surface: '#F8D4DA',
+      hover: '#FCE2E7',
+      active: '#e9bdc5',
+      accent: '#3A2A2E',
+      accentSoft: '#F4C6CF',
+      textPrimary: '#3A2A2E',
+      textSecondary: '#4A3A3E',
+      textMuted: '#8A7A7E',
+      border: '#E4B6BF',
     },
-    font: 'Source Sans 3',
+    font: 'Inter',
   },
 ];
 

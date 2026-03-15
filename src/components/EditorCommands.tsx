@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Note } from '../types';
 import { 
   Bold, Italic, Underline, Link as LinkIcon, 
-  Table, List, Heading1, Heading2, Heading3, Minus 
+  Table, List, Heading1, Heading2, Heading3, Minus,
+  Image, CheckSquare
 } from 'lucide-react';
 
 export interface CommandItem {
@@ -32,10 +33,22 @@ export const getSlashCommands = (onSelect: (cmd: string) => void): CommandItem[]
     command: () => onSelect('list'),
   },
   {
+    title: 'Checklist',
+    description: 'Lista de tarefas',
+    icon: <CheckSquare className="w-4 h-4" />,
+    command: () => onSelect('checklist'),
+  },
+  {
     title: 'Tabela',
     description: 'Tabela simples 3x2',
     icon: <Table className="w-4 h-4" />,
     command: () => onSelect('table'),
+  },
+  {
+    title: 'Imagem',
+    description: 'Inserir imagem (URL ou Upload)',
+    icon: <Image className="w-4 h-4" />,
+    command: () => onSelect('image'),
   },
   {
     title: 'Divisor',

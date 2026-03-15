@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note } from '../types';
-import { Plus, Search, Download, FileText, Trash2, MoreVertical, Menu, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette } from 'lucide-react';
+import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette } from 'lucide-react';
 
 interface SidebarProps {
   notes: Note[];
@@ -17,6 +17,7 @@ interface SidebarProps {
   onOpenThemes: () => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  currentThemeId: string;
 }
 
 export function Sidebar({
@@ -32,6 +33,7 @@ export function Sidebar({
   onOpenThemes,
   isOpen,
   setIsOpen,
+  currentThemeId,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -70,26 +72,34 @@ export function Sidebar({
   return (
     <>
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-72 bg-zinc-950 border-r border-zinc-800 transform transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`absolute md:relative h-full w-72 bg-surface border-r border-border flex flex-col transition-transform duration-300 ease-in-out z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:relative md:translate-x-0`}
+        } md:translate-x-0`}
       >
-        <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-zinc-100 tracking-tight flex items-center gap-2">
-            <span className="w-6 h-6 bg-zinc-100 rounded-md flex items-center justify-center text-zinc-950 text-sm font-black">N</span>
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
+            <span
+              className={`w-6 h-6 rounded-md flex items-center justify-center text-sm font-black ${
+                currentThemeId === 'zinc'
+                  ? 'bg-background text-text-primary'
+                  : 'bg-text-primary text-background'
+              }`}
+            >
+              N
+            </span>
             Nox
           </h1>
           <div className="flex items-center gap-1">
             <button
               onClick={onShowInfo}
-              className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 text-text-muted hover:text-text-primary hover:bg-hover rounded-lg transition-colors"
               title="Informações de Segurança"
             >
               <Info className="w-5 h-5" />
             </button>
             <button
               onClick={onCreateNote}
-              className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 text-text-muted hover:text-text-primary hover:bg-hover rounded-lg transition-colors"
               title="Nova Nota"
             >
               <Plus className="w-5 h-5" />
@@ -97,22 +107,22 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className="p-4 border-b border-zinc-800">
+        <div className="p-4 border-b border-border">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
             <input
               type="text"
               placeholder="Pesquisar notas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 placeholder-zinc-500"
+              className="w-full bg-surface border border-border text-text-secondary text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent placeholder-text-muted"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
           {filteredNotes.length === 0 ? (
-            <div className="text-center text-zinc-500 text-sm py-8">
+            <div className="text-center text-text-muted text-sm py-8">
               Nenhuma nota encontrada.
             </div>
           ) : (
@@ -122,15 +132,15 @@ export function Sidebar({
                 onClick={() => onSelectNote(note.id)}
                 className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
                   activeNoteId === note.id
-                    ? 'bg-zinc-800 text-zinc-100'
-                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                    ? 'bg-surface text-text-primary'
+                    : 'text-text-secondary hover:bg-hover hover:text-text-primary'
                 }`}
               >
                 <div className="flex-1 min-w-0 pr-2">
                   <h3 className="text-sm font-medium truncate">
                     {note.title || 'Sem título'}
                   </h3>
-                  <p className="text-xs text-zinc-500 truncate mt-1">
+                  <p className="text-xs text-text-muted truncate mt-1">
                     {format(note.updatedAt, "d 'de' MMM, yyyy", { locale: ptBR })}
                   </p>
                 </div>
@@ -141,7 +151,7 @@ export function Sidebar({
                       onDeleteNote(note.id);
                     }
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 rounded-md transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1.5 text-text-muted hover:text-error hover:bg-surface rounded-md transition-all"
                   title="Excluir"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -151,44 +161,52 @@ export function Sidebar({
           )}
         </div>
 
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 border-t border-border">
           <button
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className="w-full flex items-center justify-between px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+            className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
+              isSettingsOpen 
+                ? 'bg-accent text-accent-contrast font-medium' 
+                : 'text-text-secondary hover:text-text-primary hover:bg-hover'
+            }`}
           >
             <div className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Configurações
             </div>
-            <ChevronUp className={`w-4 h-4 transition-transform ${isSettingsOpen ? 'rotate-180' : ''}`} />
+            <ChevronUp
+              className={`w-4 h-4 transition-transform ${
+                isSettingsOpen ? 'rotate-180' : ''
+              }`}
+            />
           </button>
 
           {isSettingsOpen && (
-            <div className="mt-2 space-y-1 pl-2 border-l-2 border-zinc-800 ml-2">
+            <div className="mt-2 space-y-1 pl-2 border-l-2 border-border ml-2">
               <button
                 onClick={onOpenThemes}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
               >
-                <Palette className="w-4 h-4 text-emerald-400" />
+                <Palette className="w-4 h-4" />
                 Temas
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
               >
                 <Upload className="w-4 h-4" />
                 Importar Backup
               </button>
               <button
                 onClick={onBackup}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Exportar Backup
               </button>
               <button
                 onClick={onResetData}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 rounded-lg transition-colors mt-2"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-error hover:text-error hover:bg-error/10 rounded-lg transition-colors mt-2"
               >
                 <AlertTriangle className="w-4 h-4" />
                 Limpar Dados

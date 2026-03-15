@@ -10,62 +10,62 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
+      <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-zinc-100">Bem-vindo ao Nox</h2>
-          <p className="text-zinc-400 text-sm leading-relaxed">
+          <h2 className="text-2xl font-semibold text-text-primary">Bem-vindo ao Nox</h2>
+          <p className="text-text-secondary text-sm leading-relaxed">
             Seu novo bloco de notas focado em privacidade e velocidade.
           </p>
         </div>
 
-        <div className="space-y-4 text-sm text-zinc-300">
+        <div className="space-y-4 text-sm text-text-secondary">
           <div className="flex gap-3">
             <div className="flex-shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
             <div>
-              <strong className="text-zinc-100 block">100% Local e Seguro</strong>
+              <strong className="text-text-primary block">100% Local e Seguro</strong>
               Seus dados nunca saem do seu dispositivo. Não há servidores, contas ou senhas.
             </div>
           </div>
 
           <div className="flex gap-3">
             <div className="flex-shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <div>
-              <strong className="text-zinc-100 block">Armazenamento Limitado</strong>
-              Usamos o <code className="bg-zinc-800 px-1 py-0.5 rounded text-xs">localStorage</code> do seu navegador, que tem um limite de cerca de 5MB.
+              <strong className="text-text-primary block">Armazenamento Limitado</strong>
+              Usamos o <code className="bg-surface px-1 py-0.5 rounded text-xs">localStorage</code> do seu navegador, que tem um limite de cerca de 5MB.
             </div>
           </div>
 
           <div className="flex gap-3">
             <div className="flex-shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
             <div>
-              <strong className="text-zinc-100 block">Risco de Perda de Dados</strong>
+              <strong className="text-text-primary block">Risco de Perda de Dados</strong>
               Se você limpar o cache ou os dados do seu navegador, <strong>suas notas serão apagadas permanentemente</strong>. Use a função de backup com frequência.
             </div>
           </div>
         </div>
 
         {isFirstVisit && (
-          <div className="flex items-start gap-3 p-4 bg-zinc-950/50 rounded-lg border border-zinc-800">
+          <div className="flex items-start gap-3 p-4 bg-background/50 rounded-lg border border-border">
             <input
               type="checkbox"
               id="consent"
               checked={hasConsented}
               onChange={(e) => setHasConsented(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-zinc-900 cursor-pointer"
+              className="mt-1 w-4 h-4 rounded border-border bg-surface text-success focus:ring-success focus:ring-offset-surface cursor-pointer"
             />
-            <label htmlFor="consent" className="text-sm text-zinc-300 cursor-pointer select-none">
+            <label htmlFor="consent" className="text-sm text-text-secondary cursor-pointer select-none">
               Eu entendo que minhas notas são salvas apenas neste navegador e serão perdidas se eu limpar os dados de navegação.
             </label>
           </div>
@@ -74,10 +74,10 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
         <button
           onClick={onAccept}
           disabled={isFirstVisit && !hasConsented}
-          className={`w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+          className={`w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface ${
             isFirstVisit && !hasConsented
-              ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-              : 'bg-zinc-100 hover:bg-white text-zinc-900'
+              ? 'bg-surface text-text-muted cursor-not-allowed'
+              : 'bg-accent hover:bg-accent-soft text-white'
           }`}
         >
           {isFirstVisit ? 'Começar a usar' : 'Fechar'}

@@ -4,7 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { Note } from '../types';
 import { 
   Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
-  Bold, Italic, Underline, Link as LinkIcon, Search
+  Bold, Italic, Underline, Link as LinkIcon, Search, Maximize2, Minimize2, PanelLeftClose, Volume2
 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
@@ -18,6 +18,9 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { Markdown } from 'tiptap-markdown';
+import Image from '@tiptap/extension-image';
+import TaskList from '@tiptap/extension-task-list';
+import { CustomTaskItem } from './CustomTaskItem';
 import { getSlashCommands, CommandItem } from './EditorCommands';
 
 interface EditorProps {
@@ -28,9 +31,13 @@ interface EditorProps {
 
 export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   const [mode, setMode] = useState<'visual' | 'markdown'>('visual');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [slashMenu, setSlashMenu] = useState<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isReading, setIsReading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isUpdatingFromNote = useRef(false);
 
   // Use refs to avoid stale closures in Tiptap handlers
@@ -44,6 +51,57 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   useEffect(() => { selectedIndexRef.current = selectedIndex; }, [selectedIndex]);
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { commandsRef.current = commands; }, [commands]);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      
+      if (mode === 'visual' && editor) {
+        editor.chain().focus().setImage({ src: result }).run();
+      } else if (mode === 'markdown' && textareaRef.current && note) {
+        const textarea = textareaRef.current;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const imageMarkdown = `![Imagem](${result})`;
+        const newContent = note.content.substring(0, start) + imageMarkdown + note.content.substring(end);
+        onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(err => {
+        console.error('Erro ao ativar tela cheia:', err);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch(err => {
+        console.error('Erro ao sair da tela cheia:', err);
+      });
+    }
+  };
+
+  // Monitorar mudanças no estado de tela cheia
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   const handleCommandSelect = (type: string) => {
     const currentMode = modeRef.current;
@@ -61,6 +119,15 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         case 'tabela': case 'table': 
           editor.commands.insertContent('| Produto | Quantidade | Preço |\n|---------|------------|-------|\n| Maçã    | 10         | R$ 2  |\n| Banana  | 5          | R$ 3  |\n| Laranja | 8          | R$ 4  |');
           break;
+        case 'checklist': case 'todo': editor.commands.toggleTaskList(); break;
+        case 'imagem': case 'image': 
+          const url = window.prompt('URL da imagem (deixe vazio para fazer upload):');
+          if (url) {
+            editor.chain().focus().setImage({ src: url }).run();
+          } else {
+            fileInputRef.current?.click();
+          }
+          break;
       }
     } else if (currentMode === 'markdown' && textareaRef.current) {
       const textarea = textareaRef.current;
@@ -76,6 +143,16 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         case 'lista': case 'list': snippet = '- '; break;
         case 'divisor': case 'hr': snippet = '\n---\n'; break;
         case 'tabela': case 'table': snippet = '| Produto | Quantidade | Preço |\n|---------|------------|-------|\n| Maçã    | 10         | R$ 2  |\n| Banana  | 5          | R$ 3  |\n| Laranja | 8          | R$ 4  |'; break;
+        case 'checklist': case 'todo': snippet = '- [ ] '; break;
+        case 'imagem': case 'image': 
+          const url = window.prompt('URL da imagem (deixe vazio para fazer upload):');
+          if (url) {
+            snippet = `![Imagem](${url})`;
+          } else {
+            fileInputRef.current?.click();
+            return; // O handler do input fará a inserção
+          }
+          break;
       }
 
       // Replace the slash (which is at start-1)
@@ -107,6 +184,11 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       TableRow,
       TableHeader,
       TableCell,
+      Image,
+      TaskList,
+      CustomTaskItem.configure({
+        nested: true,
+      }),
       Placeholder.configure({
         placeholder: "Digite '/' para comandos...",
       }),
@@ -120,7 +202,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert prose-zinc max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800 prose-a:text-emerald-400 hover:prose-a:text-emerald-300 prose-img:rounded-xl prose-img:border prose-img:border-zinc-800',
+        class: 'prose max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-surface prose-pre:border prose-pre:border-border prose-a:text-accent hover:prose-a:text-accent-soft prose-img:rounded-xl prose-img:border prose-img:border-border',
       },
       handleKeyDown: (view, event) => {
         if (event.key === '/') {
@@ -160,7 +242,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         return false;
       }
     },
-  });
+  }, [note?.id]); // Re-criar editor quando a nota mudar
 
   // Sync Tiptap when note changes
   useEffect(() => {
@@ -179,13 +261,16 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   }, [note?.id]);
 
   if (!note) {
+    console.log('Debug Editor: note is null, showing placeholder message');
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 text-zinc-500">
+      <div className="flex-1 flex flex-col items-center justify-center bg-background text-text-muted">
         <FileText className="w-16 h-16 mb-4 opacity-20" />
         <p className="text-lg font-medium">Selecione uma nota ou crie uma nova</p>
       </div>
     );
   }
+
+  console.log('Debug Editor: note is valid, rendering full editor', { noteId: note.id, title: note.title });
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdateNote(note.id, { title: e.target.value, updatedAt: Date.now() });
@@ -297,88 +382,222 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
     html2pdf().set(opt).from(element).save();
   };
 
+  const readNote = () => {
+    if (!note) return;
+    
+    const textToRead = mode === 'visual' && editor 
+      ? editor.getText()
+      : note.content;
+    
+    if (!textToRead.trim()) {
+      alert('A nota está vazia!');
+      return;
+    }
+    
+    if ('speechSynthesis' in window) {
+      // Cancelar qualquer leitura anterior
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(textToRead);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      
+      utterance.onstart = () => setIsReading(true);
+      utterance.onend = () => setIsReading(false);
+      utterance.onerror = () => setIsReading(false);
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('Seu navegador não suporta leitura em voz alta.');
+    }
+  };
+
+  const stopReading = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col h-screen bg-zinc-950 overflow-hidden relative">
-      <header className="flex-none h-16 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-950/50 backdrop-blur-sm z-10">
+    <div className="flex-1 flex flex-col h-full bg-background relative">
+      <header className="flex-none h-16 border-b border-border flex items-center justify-between px-4 bg-background/50 backdrop-blur-sm z-10">
+        {/* Left side: Sidebar toggle and Title */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <button
-            onClick={onToggleSidebar}
-            className="md:hidden p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="flex items-center">
+            <button
+              onClick={onToggleSidebar}
+              className="p-2 text-text-muted hover:text-text-primary hover:bg-hover rounded-lg transition-colors"
+              title="Alternar menu lateral"
+            >
+              <PanelLeftClose className="w-5 h-5" />
+            </button>
+          </div>
           <input
             type="text"
             value={note.title}
             onChange={handleTitleChange}
             placeholder="Título da nota"
-            className="flex-1 bg-transparent text-xl font-semibold text-zinc-100 placeholder-zinc-600 focus:outline-none truncate"
+            className="flex-1 bg-transparent text-xl font-semibold text-text-primary placeholder-text-muted focus:outline-none truncate"
           />
         </div>
 
+        {/* Right side: Actions */}
         <div className="flex items-center gap-2 ml-4">
-          <div className="hidden sm:flex items-center bg-zinc-900 rounded-lg p-1 border border-zinc-800">
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-2">
+            <div className="flex items-center bg-surface rounded-lg p-1 border border-border">
+              <button
+                onClick={() => setMode('visual')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  mode === 'visual' ? 'bg-accent text-accent-contrast shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-hover/50'
+                }`}
+              >
+                <Type className="w-4 h-4" /> Visual
+              </button>
+              <button
+                onClick={() => setMode('markdown')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  mode === 'markdown' ? 'bg-accent text-accent-contrast shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-hover/50'
+                }`}
+              >
+                <Code className="w-4 h-4" /> Markdown
+              </button>
+            </div>
+
+            <div className="relative group">
+              <button className="p-2 text-text-muted hover:text-text-primary hover:bg-hover rounded-lg transition-colors flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                <span className="hidden sm:inline text-sm font-medium">Exportar</span>
+              </button>
+              <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1">
+                <button onClick={exportTxt} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors">
+                  <FileType2 className="w-4 h-4" /> TXT
+                </button>
+                <button onClick={exportHtml} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors">
+                  <FileCode2 className="w-4 h-4" /> HTML
+                </button>
+                <button onClick={exportPdf} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors">
+                  <FileText className="w-4 h-4" /> PDF
+                </button>
+              </div>
+            </div>
+
             <button
-              onClick={() => setMode('visual')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                mode === 'visual' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+              onClick={isReading ? stopReading : readNote}
+              className={`p-2 rounded-lg transition-colors ${
+                isReading 
+                  ? 'text-accent bg-accent/10' 
+                  : 'text-text-muted hover:text-text-primary hover:bg-hover'
               }`}
+              title={isReading ? "Parar leitura" : "Ler nota em voz alta"}
             >
-              <Type className="w-4 h-4" /> Visual
+              <Volume2 className="w-5 h-5" />
             </button>
+
             <button
-              onClick={() => setMode('markdown')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                mode === 'markdown' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
-              }`}
+              onClick={toggleFullscreen}
+              className="p-2 text-text-muted hover:text-text-primary hover:bg-hover rounded-lg transition-colors"
+              title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
             >
-              <Code className="w-4 h-4" /> Markdown
+              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </button>
           </div>
 
-          <div className="relative group">
-            <button className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              <span className="hidden sm:inline text-sm font-medium">Exportar</span>
+          {/* Mobile Actions (Hamburger Menu) */}
+          <div className="relative md:hidden">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-text-muted hover:text-text-primary hover:bg-hover rounded-lg transition-colors"
+            >
+              <Menu className="w-5 h-5" />
             </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1">
-              <button onClick={exportTxt} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
-                <FileType2 className="w-4 h-4" /> TXT
-              </button>
-              <button onClick={exportHtml} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
-                <FileCode2 className="w-4 h-4" /> HTML
-              </button>
-              <button onClick={exportPdf} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
-                <FileText className="w-4 h-4" /> PDF
-              </button>
-            </div>
+
+            {isMobileMenuOpen && (
+              <div 
+                className="absolute right-0 top-full mt-2 w-64 bg-surface border border-border rounded-xl shadow-xl z-50 py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <div className="px-4 py-2">
+                  <p className="text-xs font-bold uppercase text-text-muted tracking-wider mb-2">Modo</p>
+                  <div className="flex items-center bg-background rounded-lg p-1 border border-border">
+                    <button
+                      onClick={() => setMode('visual')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        mode === 'visual' ? 'bg-accent text-accent-contrast shadow-sm' : 'text-text-secondary'
+                      }`}
+                    >
+                      <Type className="w-4 h-4" /> Visual
+                    </button>
+                    <button
+                      onClick={() => setMode('markdown')}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        mode === 'markdown' ? 'bg-accent text-accent-contrast shadow-sm' : 'text-text-secondary'
+                      }`}
+                    >
+                      <Code className="w-4 h-4" /> Markdown
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="border-t border-border my-1" />
+
+                <div className="px-4 py-2">
+                  <p className="text-xs font-bold uppercase text-text-muted tracking-wider mb-2">Ações</p>
+                  <button onClick={isReading ? stopReading : readNote} className="w-full flex items-center gap-3 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors rounded-md">
+                    <Volume2 className="w-4 h-4" />
+                    <span>{isReading ? "Parar leitura" : "Ler nota em voz alta"}</span>
+                  </button>
+                  <button onClick={toggleFullscreen} className="w-full flex items-center gap-3 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors rounded-md">
+                    {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                    <span>{isFullscreen ? "Sair da Tela Cheia" : "Tela Cheia"}</span>
+                  </button>
+                </div>
+                
+                <div className="border-t border-border my-1" />
+
+                <div className="px-4 py-2">
+                  <p className="text-xs font-bold uppercase text-text-muted tracking-wider mb-2">Exportar</p>
+                  <button onClick={exportTxt} className="w-full flex items-center gap-3 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors rounded-md">
+                    <FileType2 className="w-4 h-4" /> TXT
+                  </button>
+                  <button onClick={exportHtml} className="w-full flex items-center gap-3 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors rounded-md">
+                    <FileCode2 className="w-4 h-4" /> HTML
+                  </button>
+                  <button onClick={exportPdf} className="w-full flex items-center gap-3 py-2 text-sm text-text-secondary hover:bg-hover hover:text-text-primary transition-colors rounded-md">
+                    <FileText className="w-4 h-4" /> PDF
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      <div className="flex-none px-4 py-2 bg-zinc-900/30 border-b border-zinc-800/50 flex items-center gap-4 text-xs text-zinc-500">
+      <div className="flex-none px-4 py-2 bg-surface/30 border-b border-border/50 flex items-center gap-4 text-xs text-text-muted">
         <span>Criado: {format(note.createdAt, "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
         <span>Modificado: {format(note.updatedAt, "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
       </div>
 
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 relative overflow-y-auto">
         {editor && mode === 'visual' && (
           <BubbleMenu editor={editor}>
-            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-lg shadow-xl backdrop-blur-md">
-              <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('bold') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+            <div className="flex items-center gap-1 bg-surface border border-border p-1 rounded-lg shadow-xl backdrop-blur-md">
+              <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1.5 rounded hover:bg-hover transition-colors ${editor.isActive('bold') ? 'text-accent bg-hover' : 'text-text-secondary'}`}>
                 <Bold className="w-4 h-4" />
               </button>
-              <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('italic') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+              <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-1.5 rounded hover:bg-hover transition-colors ${editor.isActive('italic') ? 'text-accent bg-hover' : 'text-text-secondary'}`}>
                 <Italic className="w-4 h-4" />
               </button>
-              <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('underline') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+              <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={`p-1.5 rounded hover:bg-hover transition-colors ${editor.isActive('underline') ? 'text-accent bg-hover' : 'text-text-secondary'}`}>
                 <Underline className="w-4 h-4" />
               </button>
-              <div className="w-px h-4 bg-zinc-800 mx-1" />
+              <div className="w-px h-4 bg-border mx-1" />
               <button onClick={() => {
                 const url = window.prompt('URL:');
                 if (url) editor.chain().focus().setLink({ href: url }).run();
-              }} className={`p-1.5 rounded hover:bg-zinc-800 transition-colors ${editor.isActive('link') ? 'text-emerald-400 bg-zinc-800' : 'text-zinc-400'}`}>
+              }} className={`p-1.5 rounded hover:bg-hover transition-colors ${editor.isActive('link') ? 'text-accent bg-hover' : 'text-text-secondary'}`}>
                 <LinkIcon className="w-4 h-4" />
               </button>
             </div>
@@ -387,18 +606,18 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
 
         {slashMenu.active && (
           <div 
-            className="fixed z-50 w-64 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl py-2 overflow-hidden"
+            className="fixed z-50 w-64 bg-surface border border-border rounded-xl shadow-2xl py-2 overflow-hidden"
             style={{ left: slashMenu.x, top: slashMenu.y }}
           >
-            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Comandos</div>
+            <div className="px-3 py-1.5 text-[10px] font-bold text-text-muted uppercase tracking-wider">Comandos</div>
             {commands.map((cmd, i) => (
               <button
                 key={cmd.title}
                 onClick={() => handleCommandSelect(cmd.title.toLowerCase())}
                 onMouseEnter={() => setSelectedIndex(i)}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${selectedIndex === i ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400'}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${selectedIndex === i ? 'bg-hover text-text-primary' : 'text-text-secondary'}`}
               >
-                <div className={`p-1.5 rounded-lg ${selectedIndex === i ? 'bg-zinc-700 text-emerald-400' : 'bg-zinc-800'}`}>
+                <div className={`p-1.5 rounded-lg ${selectedIndex === i ? 'bg-surface text-accent' : 'bg-hover'}`}>
                   {cmd.icon}
                 </div>
                 <div>
@@ -413,18 +632,18 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         {mode === 'markdown' ? (
           <div className="w-full h-full relative">
             {/* Floating toolbar for Markdown mode */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-zinc-900/80 border border-zinc-800 p-1 rounded-lg shadow-xl backdrop-blur-md">
-              <button onClick={() => applyMarkdownStyle('**')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Bold className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('*')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Italic className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('<u>', '</u>')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><Underline className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('[', '](url)')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 transition-colors"><LinkIcon className="w-4 h-4" /></button>
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-surface/80 border border-border p-1 rounded-lg shadow-xl backdrop-blur-md">
+              <button onClick={() => applyMarkdownStyle('**')} className="p-1.5 rounded hover:bg-hover text-text-secondary transition-colors"><Bold className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('*')} className="p-1.5 rounded hover:bg-hover text-text-secondary transition-colors"><Italic className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('<u>', '</u>')} className="p-1.5 rounded hover:bg-hover text-text-secondary transition-colors"><Underline className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('[', '](url)')} className="p-1.5 rounded hover:bg-hover text-text-secondary transition-colors"><LinkIcon className="w-4 h-4" /></button>
             </div>
             <textarea
               ref={textareaRef}
               value={note.content}
               onChange={handleMarkdownChange}
               placeholder="Comece a escrever em Markdown..."
-              className="w-full h-full p-16 bg-transparent text-zinc-300 font-mono text-sm leading-relaxed resize-none focus:outline-none placeholder-zinc-700"
+              className="w-full h-full p-16 bg-transparent text-text-secondary font-mono text-sm leading-relaxed resize-none focus:outline-none placeholder-text-muted"
               spellCheck="false"
             />
           </div>
@@ -438,11 +657,19 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       <div className="sm:hidden fixed bottom-6 right-6 z-20">
         <button
           onClick={() => setMode(mode === 'visual' ? 'markdown' : 'visual')}
-          className="bg-zinc-100 text-zinc-900 p-4 rounded-full shadow-lg shadow-black/50 hover:bg-white transition-colors"
+          className="bg-text-primary text-background p-4 rounded-full shadow-lg shadow-black/50 hover:bg-white transition-colors"
         >
           {mode === 'markdown' ? <Type className="w-6 h-6" /> : <Code className="w-6 h-6" />}
         </button>
       </div>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImageUpload}
+        className="hidden"
+        accept="image/*"
+      />
     </div>
   );
 }

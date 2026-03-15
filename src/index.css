@@ -2,44 +2,435 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Define theme variables directly in :root for better compatibility */
+:root {
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-manrope: "Manrope", sans-serif;
+  --font-source: "Source Sans 3", sans-serif;
+  
+  /* Semantic Colors - mapped directly to CSS variables */
+  --color-background: var(--bg-primary, #09090b);
+  --color-surface: var(--bg-surface, #18181b);
+  --color-hover: var(--bg-hover, #3f3f46);
+  --color-accent: var(--accent-primary, #10b981);
+  --color-accent-soft: var(--accent-soft, #ecfdf5);
+  --color-text-primary: var(--text-primary, #f4f4f5);
+  --color-text-secondary: var(--text-secondary, #a1a1aa);
+  --color-text-muted: var(--text-muted, #52525b);
+  --color-border: var(--border-color, #27272a);
+  
+  /* Semantic Fonts - dynamic mapping based on theme font value */
+  --font-sans: var(--app-font, "Inter", sans-serif);
+  
+  /* Font mapping based on theme font names */
+  --font-family-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-family-manrope: "Manrope", sans-serif;
+  --font-family-source: "Source Sans 3", sans-serif;
+  --font-family-source-sans-3: "Source Sans 3", sans-serif;
+}
+
+/* Apply CSS variables to the root element that receives inline styles */
+#root {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* Dynamic font mapping based on --app-font value */
+#root[style*="--app-font: Inter"] {
+  font-family: var(--font-inter) !important;
+}
+
+#root[style*="--app-font: Manrope"] {
+  font-family: var(--font-manrope) !important;
+}
+
+#root[style*="--app-font: Source Sans 3"] {
+  font-family: var(--font-source) !important;
+}
+
+/* Alternative approach: use CSS custom property directly */
+#root {
+  font-family: var(--font-sans) !important;
+}
+
+/* Direct mapping using --app-font value */
+#root {
+  font-family: var(--app-font) !important;
+}
+
+/* Force font family inheritance for all text elements */
+#root,
+#root * {
+  font-family: var(--app-font) !important;
+}
+
+/* Ensure all child elements inherit the CSS variables */
+#root * {
+  background-color: inherit;
+  color: inherit;
+  border-color: var(--border-color);
+  font-family: inherit !important;
+}
+
+.bg-background {
+  background-color: var(--bg-primary) !important;
+}
+
+.text-text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.text-text-muted {
+  color: var(--text-muted) !important;
+}
+
+.bg-surface {
+  background-color: var(--bg-surface) !important;
+}
+
+.bg-hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.text-accent {
+  color: var(--accent-primary) !important;
+}
+
+.bg-accent {
+  background-color: var(--accent-primary) !important;
+}
+
+.border-border {
+  border-color: var(--border-color) !important;
+}
+
+/* Custom class for text that needs to contrast with an accent background */
+.text-accent-contrast {
+  color: white !important;
+}
+
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 10px;
+  border: 2px solid var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+
+/* Font utility classes for dynamic theme switching */
+.font-inter {
+  font-family: var(--font-inter) !important;
+}
+
+.font-manrope {
+  font-family: var(--font-manrope) !important;
+}
+
+.font-source {
+  font-family: var(--font-source) !important;
+}
+
+/* Apply font family to all elements using Tailwind's font-sans class */
+.font-sans {
+  font-family: var(--font-sans) !important;
+}
+
+/* Ensure the root element and all children use the theme font */
+#root,
+#root * {
+  font-family: var(--font-sans) !important;
+}
+
+/* Override for specific font selections */
+#root[style*="--app-font: Inter"],
+#root[style*="--app-font: Inter"] * {
+  font-family: var(--font-inter) !important;
+}
+
+#root[style*="--app-font: Manrope"],
+#root[style*="--app-font: Manrope"] * {
+  font-family: var(--font-manrope) !important;
+}
+
+#root[style*="--app-font: Source Sans 3"],
+#root[style*="--app-font: Source Sans 3"] * {
+  font-family: var(--font-source) !important;
+}
+
+/* Forçar inversão de cores da logo - Classes customizadas com !important */
+.logo-bg-inverted {
+  background-color: #000000 !important;
+  background: #000000 !important;
+}
+
+.logo-text-inverted {
+  color: #ffffff !important;
+}
+
+/* Garantir que aplica via classe */
+.logo-inverted {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.sidebar, [class*="sidebar"] {
+  background-color: var(--bg-surface) !important;
+}
+
+.editor, [class*="editor"] {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.modal, [class*="modal"] {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+}
+
+.button, button, [class*="button"] {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.button:hover, button:hover, [class*="button"]:hover {
+  background-color: var(--accent-primary) !important;
+  color: var(--accent-soft) !important;
+}
+
+input, textarea, select {
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Ensure all text elements inherit the font family */
+h1, h2, h3, h4, h5, h6, p, span, div, a, li, td, th, input, textarea, button, select {
+  font-family: inherit !important;
+}
+
+/* Override for specific font selections */
+#root[style*="--app-font: Inter"],
+#root[style*="--app-font: Inter"] * {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+}
+
+#root[style*="--app-font: Manrope"],
+#root[style*="--app-font: Manrope"] * {
+  font-family: "Manrope", sans-serif !important;
+}
+
+#root[style*="--app-font: Source Sans 3"],
+#root[style*="--app-font: Source Sans 3"] * {
+  font-family: "Source Sans 3", sans-serif !important;
+}
+
+/* Global font application - highest specificity */
+* {
+  font-family: var(--app-font, "Inter", sans-serif) !important;
+}
+
+/* Override for specific font selections with highest specificity */
+#root[style*="--app-font: Inter"] * {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
+}
+
+#root[style*="--app-font: Manrope"] * {
+  font-family: "Manrope", sans-serif !important;
+}
+
+#root[style*="--app-font: Source Sans 3"] * {
+  font-family: "Source Sans 3", sans-serif !important;
+}
+
+/* Ensure hover states work with CSS variables */
+.hover\:bg-hover:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.hover\:bg-surface:hover {
+  background-color: var(--bg-surface) !important;
+}
+
+.hover\:text-accent:hover {
+  color: var(--accent-primary) !important;
+}
+
+/* Utility classes for status messages and alerts */
+.bg-success {
+  background-color: var(--color-green-500) !important;
+}
+
+.text-success {
+  color: var(--color-green-600) !important;
+}
+
+.border-success {
+  border-color: var(--color-green-500) !important;
+}
+
+.bg-error {
+  background-color: var(--color-red-500) !important;
+}
+
+.text-error {
+  color: var(--color-red-600) !important;
+}
+
+.border-error {
+  border-color: var(--color-red-500) !important;
+}
+
+.bg-warning {
+  background-color: var(--color-yellow-500) !important;
+}
+
+.text-warning {
+  color: var(--color-yellow-600) !important;
+}
+
+.border-warning {
+  border-color: var(--color-yellow-500) !important;
+}
+
+.bg-info {
+  background-color: var(--color-blue-500) !important;
+}
+
+.text-info {
+  color: var(--color-blue-600) !important;
+}
+
+.border-info {
+  border-color: var(--color-blue-500) !important;
+}
+
+/* Hover states for error/success/warning buttons */
+.hover\:bg-error:hover {
+  background-color: var(--color-red-600) !important;
+}
+
+.hover\:bg-success:hover {
+  background-color: var(--color-green-600) !important;
+}
+
+.hover\:bg-warning:hover {
+  background-color: var(--color-yellow-600) !important;
+}
+
+.hover\:text-error:hover {
+  color: var(--color-red-600) !important;
+}
+
+.hover\:text-success:hover {
+  color: var(--color-green-600) !important;
+}
+
+.hover\:text-warning:hover {
+  color: var(--color-yellow-600) !important;
+}
+
 @theme {
   --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-manrope: "Manrope", sans-serif;
   --font-source: "Source Sans 3", sans-serif;
   
-  --color-accent: var(--accent-primary);
-  --color-accent-soft: var(--accent-soft);
-
-  /* Map existing zinc classes to theme variables */
-  --color-zinc-950: var(--bg-primary);
-  --color-zinc-900: var(--bg-surface);
-  --color-zinc-800: var(--bg-hover);
-  --color-zinc-100: var(--text-primary);
-  --color-zinc-400: var(--text-secondary);
-  --color-zinc-500: var(--text-muted);
-
-  /* Map emerald to accent */
-  --color-emerald-400: var(--accent-primary);
-  --color-emerald-500: var(--accent-primary);
+  /* Semantic Colors */
+  --color-background: var(--bg-primary, #09090b);
+  --color-surface: var(--bg-surface, #18181b);
+  --color-hover: var(--bg-hover, #27272a);
+  --color-accent: var(--accent-primary, #10b981);
+  --color-accent-soft: var(--accent-soft, #ecfdf5);
+  --color-text-primary: var(--text-primary, #f4f4f5);
+  --color-text-secondary: var(--text-secondary, #a1a1aa);
+  --color-text-muted: var(--text-muted, #52525b);
+  --color-border: var(--border-color, #27272a);
+  
+  /* Semantic Fonts */
+  --font-sans: var(--app-font, "Inter", sans-serif);
+  
+  /* Utility Colors - Success, Error, Warning, Info */
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+  --color-rose-700: #be123c;
+  
+  --color-yellow-50: #fefce8;
+  --color-yellow-100: #fef9c3;
+  --color-yellow-500: #eab308;
+  --color-yellow-600: #ca8a04;
+  --color-yellow-700: #a16207;
+  
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  
+  --color-purple-50: #faf5ff;
+  --color-purple-100: #f3e8ff;
+  --color-purple-500: #a855f7;
+  --color-purple-600: #9333ea;
+  --color-purple-700: #7c3aed;
+  
+  --color-pink-50: #fdf2f8;
+  --color-pink-100: #fce7f3;
+  --color-pink-500: #ec4899;
+  --color-pink-600: #db2777;
+  --color-pink-700: #be185d;
+  
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
 }
 
-:root {
-  --bg-primary: #09090b;
-  --bg-surface: #18181b;
-  --bg-hover: #27272a;
-  --accent-primary: #10b981;
-  --accent-soft: #ecfdf5;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
-  --border-color: #27272a;
-  --app-font: "Inter", sans-serif;
-}
-
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--app-font);
+@layer base {
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--app-font);
+  }
 }
 
 @layer base {
@@ -86,4 +477,41 @@ body {
     @apply absolute right-[-2px] top-0 bottom-[-2px] w-1 pointer-events-none;
     background-color: var(--accent-primary);
   }
+}
+
+/* Tiptap Task List Styles */
+ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+li[data-type="taskItem"] {
+  display: flex;
+  flex-direction: row; /* Ensure horizontal layout */
+  align-items: center; /* Center align checkbox and text */
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+li[data-type="taskItem"] > label {
+  flex-shrink: 0;
+  margin: 0; /* Remove any default margins */
+}
+
+li[data-type="taskItem"] > div {
+  display: inline-block !important; /* Force inline block */
+  width: auto !important; /* Don't take full width */
+  margin: 0; /* Remove any default margins */
+}
+
+li[data-type="taskItem"] p {
+  margin: 0 !important;
+  display: inline !important; /* Ensure paragraph doesn't create block */
+}
+
+li[data-type="taskItem"] input[type="checkbox"] {
+  cursor: pointer;
+  margin: 0; /* Remove default margins */
+  vertical-align: middle; /* Align with text */
 }
