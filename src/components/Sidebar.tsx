@@ -501,8 +501,8 @@ export function Sidebar({
           <button
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
             className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
-              isSettingsOpen 
-                ? 'bg-accent text-accent-contrast font-medium' 
+              isSettingsOpen
+                ? 'bg-accent text-accent-contrast font-medium'
                 : 'text-text-secondary hover:text-text-primary hover:bg-hover'
             }`}
           >
