@@ -11,49 +11,32 @@ import { Note, INITIAL_NOTE, THEMES, ThemeId } from './types';
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [hasUserTyped, setHasUserTyped] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  // Detectar se é mobile e ajustar estado inicial do sidebar
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    return window.innerWidth >= 768; // Aberto apenas em desktop
-  });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [currentThemeId, setCurrentThemeId] = useLocalStorage<ThemeId>('nox-theme', 'zinc');
 
-  const theme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
-
-  const themeStyles = {
-    '--bg-primary': theme.colors.primary,
-    '--bg-surface': theme.colors.surface,
-    '--bg-hover': theme.colors.hover,
-    '--bg-active': theme.colors.active,
-    '--accent-primary': theme.colors.accent,
-    '--accent-soft': theme.colors.accentSoft,
-    '--text-primary': theme.colors.textPrimary,
-    '--text-secondary': theme.colors.textSecondary,
-    '--text-muted': theme.colors.textMuted,
-    '--border-color': theme.colors.border,
-    '--app-font': theme.font,
-  } as React.CSSProperties;
-
-  // Create dynamic font class based on theme font
-  const fontClass = theme.font.toLowerCase().replace(/\s+/g, '-');
-  const dynamicFontClass = fontClass === 'source-sans-3' ? 'font-source' : `font-${fontClass}`;
-
-  // Apply theme styles to body for modal backdrop
+  // Apply theme
   useEffect(() => {
-    Object.entries(themeStyles).forEach(([key, value]) => {
-      document.body.style.setProperty(key, value as string);
-    });
+    const theme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
+    const root = document.documentElement;
     
-    return () => {
-      Object.entries(themeStyles).forEach(([key]) => {
-        document.body.style.removeProperty(key);
-      });
-    };
-  }, [themeStyles]);
+    root.style.setProperty('--bg-primary', theme.colors.primary);
+    root.style.setProperty('--bg-surface', theme.colors.surface);
+    root.style.setProperty('--bg-hover', theme.colors.hover);
+    root.style.setProperty('--accent-primary', theme.colors.accent);
+    root.style.setProperty('--accent-soft', theme.colors.accentSoft);
+    root.style.setProperty('--text-primary', theme.colors.textPrimary);
+    root.style.setProperty('--text-secondary', theme.colors.textSecondary);
+    root.style.setProperty('--text-muted', theme.colors.textMuted);
+    root.style.setProperty('--border-color', theme.colors.border);
+    root.style.setProperty('--app-font', theme.font);
+    
+    // Update body font
+    document.body.style.fontFamily = theme.font;
+  }, [currentThemeId]);
 
   // Set initial active note
   useEffect(() => {
@@ -63,23 +46,6 @@ export default function App() {
       setActiveNoteId(mostRecent.id);
     }
   }, [notes, activeNoteId]);
-
-  // Ajustar sidebar quando redimensionar a tela
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        // Em mobile, fechar o sidebar por padrão
-        setIsSidebarOpen(false);
-      }
-    };
-
-    // Executar uma vez no carregamento
-    handleResize();
-
-    // Adicionar listener para redimensionamento
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleCreateNote = () => {
     const newNote: Note = {
@@ -139,54 +105,11 @@ export default function App() {
     setIsSidebarOpen(false);
   };
 
-  const handleFirstUserInput = () => {
-    console.log('Debug App: handleFirstUserInput called', { isFirstVisit, hasUserTyped });
-    if (isFirstVisit && !hasUserTyped) {
-      console.log('Debug App: showing welcome modal');
-      setHasUserTyped(true);
-      setShowWelcomeModal(true);
-    }
-  };
-
   const activeNote = notes.find((n) => n.id === activeNoteId) || null;
 
-  // Debug: Verificar se há notas e qual é a nota ativa
-  console.log('Debug App.tsx:', {
-    notesCount: notes.length,
-    activeNoteId,
-    activeNote: activeNote ? { id: activeNote.id, title: activeNote.title } : null,
-    isSidebarOpen,
-    windowWidth: window.innerWidth
-  });
-
   return (
-    <div 
-      className={`flex h-screen bg-background text-text-primary ${dynamicFontClass} selection:bg-surface selection:text-text-primary`}
-      style={themeStyles}
-    >
-      <div className={`transition-all duration-300 ease-in-out ${
-        isSidebarOpen ? 'w-72' : 'w-0 md:w-0'
-      } overflow-hidden flex-shrink-0 ${isSidebarOpen ? 'block' : 'hidden md:block'}`}>
-        <Sidebar
-          notes={notes}
-          activeNoteId={activeNoteId}
-          onSelectNote={(id) => {
-            setActiveNoteId(id);
-            setIsSidebarOpen(false);
-          }}
-          onCreateNote={handleCreateNote}
-          onDeleteNote={handleDeleteNote}
-          onBackup={handleBackup}
-          onImport={handleImport}
-          onShowInfo={() => setShowWelcomeModal(true)}
-          onResetData={() => setShowResetModal(true)}
-          onOpenThemes={() => setShowSettingsModal(true)}
-          isOpen={isSidebarOpen}
-          setIsOpen={setIsSidebarOpen}
-          currentThemeId={currentThemeId}
-        />
-      </div>
-      {showWelcomeModal && (
+    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans selection:bg-zinc-800 selection:text-zinc-100">
+      {(isFirstVisit || showWelcomeModal) && (
         <WelcomeModal 
           isFirstVisit={isFirstVisit}
           onAccept={() => {
@@ -211,14 +134,30 @@ export default function App() {
         />
       )}
       
-      <div className="flex-1">
-        <Editor
-          note={activeNote}
-          onUpdateNote={handleUpdateNote}
-          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-          onFirstUserInput={handleFirstUserInput}
-        />
-      </div>
+      <Sidebar
+        notes={notes}
+        activeNoteId={activeNoteId}
+        onSelectNote={(id) => {
+          setActiveNoteId(id);
+          setIsSidebarOpen(false);
+        }}
+        onCreateNote={handleCreateNote}
+        onDeleteNote={handleDeleteNote}
+        onBackup={handleBackup}
+        onImport={handleImport}
+        onShowInfo={() => setShowWelcomeModal(true)}
+        onResetData={() => setShowResetModal(true)}
+        onOpenThemes={() => setShowSettingsModal(true)}
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+        currentThemeId={currentThemeId}
+      />
+      
+      <Editor
+        note={activeNote}
+        onUpdateNote={handleUpdateNote}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
     </div>
   );
 }
