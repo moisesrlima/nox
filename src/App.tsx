@@ -108,7 +108,7 @@ export default function App() {
   const activeNote = notes.find((n) => n.id === activeNoteId) || null;
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans selection:bg-zinc-800 selection:text-zinc-100">
+    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
       {(isFirstVisit || showWelcomeModal) && (
         <WelcomeModal 
           isFirstVisit={isFirstVisit}
@@ -157,6 +157,7 @@ export default function App() {
         note={activeNote}
         onUpdateNote={handleUpdateNote}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        currentThemeId={currentThemeId}
       />
     </div>
   );

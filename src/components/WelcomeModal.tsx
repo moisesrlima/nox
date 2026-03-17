@@ -10,15 +10,15 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-zinc-100">Bem-vindo ao Nox</h2>
-          <p className="text-zinc-400 text-sm leading-relaxed">
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Bem-vindo ao Nox</h2>
+          <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
             Seu novo bloco de notas focado em privacidade e velocidade.
           </p>
         </div>
 
-        <div className="space-y-4 text-sm text-zinc-300">
+        <div className="space-y-4 text-sm text-[var(--text-secondary)]">
           <div className="flex gap-3">
             <div className="flex-shrink-0 mt-0.5">
               <svg className="w-5 h-5 text-[var(--accent-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -26,7 +26,7 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
               </svg>
             </div>
             <div>
-              <strong className="text-zinc-100 block">100% Local e Seguro</strong>
+              <strong className="text-[var(--text-primary)] block">100% Local e Seguro</strong>
               Seus dados nunca saem do seu dispositivo. Não há servidores, contas ou senhas.
             </div>
           </div>
@@ -38,8 +38,8 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
               </svg>
             </div>
             <div>
-              <strong className="text-zinc-100 block">Armazenamento Limitado</strong>
-              Usamos o <code className="bg-zinc-800 px-1 py-0.5 rounded text-xs">localStorage</code> do seu navegador, que tem um limite de cerca de 5MB.
+              <strong className="text-[var(--text-primary)] block">Armazenamento Limitado</strong>
+              Usamos o <code className="bg-[var(--bg-hover)] px-1 py-0.5 rounded text-xs">localStorage</code> do seu navegador, que tem um limite de cerca de 5MB.
             </div>
           </div>
 
@@ -50,22 +50,22 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
               </svg>
             </div>
             <div>
-              <strong className="text-zinc-100 block">Risco de Perda de Dados</strong>
+              <strong className="text-[var(--text-primary)] block">Risco de Perda de Dados</strong>
               Se você limpar o cache ou os dados do seu navegador, <strong>suas notas serão apagadas permanentemente</strong>. Use a função de backup com frequência.
             </div>
           </div>
         </div>
 
         {isFirstVisit && (
-          <div className="flex items-start gap-3 p-4 bg-zinc-950/50 rounded-lg border border-zinc-800">
+          <div className="flex items-start gap-3 p-4 bg-[var(--bg-primary)]/50 rounded-lg border border-[var(--border-color)]">
             <input
               type="checkbox"
               id="consent"
               checked={hasConsented}
               onChange={(e) => setHasConsented(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] focus:ring-offset-zinc-900 cursor-pointer"
+              className="mt-1 w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] focus:ring-offset-[var(--bg-surface)] cursor-pointer"
             />
-            <label htmlFor="consent" className="text-sm text-zinc-300 cursor-pointer select-none">
+            <label htmlFor="consent" className="text-sm text-[var(--text-secondary)] cursor-pointer select-none">
               Eu entendo que minhas notas são salvas apenas neste navegador e serão perdidas se eu limpar os dados de navegação.
             </label>
           </div>
@@ -74,10 +74,10 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
         <button
           onClick={onAccept}
           disabled={isFirstVisit && !hasConsented}
-          className={`w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+          className={`w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--text-muted)] focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)] ${
             isFirstVisit && !hasConsented
-              ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-              : 'bg-[var(--accent-primary)] hover:opacity-90 text-zinc-950'
+              ? 'bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-not-allowed'
+              : 'bg-[var(--accent-primary)] hover:opacity-90 text-[var(--bg-primary)]'
           }`}
         >
           {isFirstVisit ? 'Começar a usar' : 'Fechar'}

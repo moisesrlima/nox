@@ -3,6 +3,7 @@ export type ThemeId = 'zinc' | 'sapphire' | 'olive' | 'sakura';
 export interface Theme {
   id: ThemeId;
   name: string;
+  isDark: boolean;
   colors: {
     primary: string;
     surface: string;
@@ -22,6 +23,7 @@ export const THEMES: Theme[] = [
   {
     id: 'zinc',
     name: 'Zinc (Padrão)',
+    isDark: true,
     colors: {
       primary: '#09090b',
       surface: '#18181b',
@@ -39,6 +41,7 @@ export const THEMES: Theme[] = [
   {
     id: 'sapphire',
     name: 'Sapphire',
+    isDark: false,
     colors: {
       primary: '#e7edfe',
       surface: '#f0f4ff',
@@ -56,6 +59,7 @@ export const THEMES: Theme[] = [
   {
     id: 'olive',
     name: 'Olive',
+    isDark: false,
     colors: {
       primary: '#f5f5f1',
       surface: '#fafaf8',
@@ -73,6 +77,7 @@ export const THEMES: Theme[] = [
   {
     id: 'sakura',
     name: 'Sakura',
+    isDark: false,
     colors: {
       primary: '#F4C6CF',
       surface: '#F8D4DA',

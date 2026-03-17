@@ -264,14 +264,14 @@ export function Sidebar({
   return (
     <>
       <div
-        className={`absolute md:relative h-full w-72 bg-surface border-r border-border flex flex-col transition-transform duration-300 ease-in-out z-40 ${
+        className={`absolute md:relative h-full w-72 bg-[var(--bg-surface)] border-r border-[var(--border-color)] flex flex-col transition-transform duration-300 ease-in-out z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
       >
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h1 className="text-xl font-bold text-text-primary tracking-tight flex items-center gap-2">
+        <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
             <span
-              className="w-6 h-6 rounded-md flex items-center justify-center text-sm font-black bg-accent text-accent-contrast"
+              className={`w-6 h-6 rounded-md flex items-center justify-center text-sm font-black ${currentThemeId === 'zinc' ? 'bg-[var(--text-primary)] text-[var(--bg-primary)]' : 'bg-[var(--accent-primary)] text-[var(--bg-primary)]'}`}
             >
               N
             </span>
@@ -280,30 +280,30 @@ export function Sidebar({
           <div className="flex items-center gap-1">
             <button
               onClick={onShowInfo}
-              className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-lg transition-colors group"
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
               title="Informações de Segurança"
             >
-              <Info className="w-5 h-5 text-text-secondary group-hover:text-text-primary" />
+              <Info className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
             </button>
             <button
               onClick={onCreateNote}
-              className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-lg transition-colors group"
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
               title="Nova Nota"
             >
-              <Plus className="w-5 h-5 text-text-secondary group-hover:text-text-primary" />
+              <Plus className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
             </button>
           </div>
         </div>
 
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-[var(--border-color)]">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)]" />
             <input
               type="text"
               placeholder="Pesquisar notas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-surface border border-border text-text-secondary text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent placeholder-text-muted"
+              className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-secondary)] text-sm rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)] placeholder-[var(--text-muted)]"
             />
           </div>
         </div>
@@ -373,7 +373,7 @@ export function Sidebar({
             {isPomodoroOpen && (
               <div className="mt-2 space-y-3 p-3 bg-surface/50 rounded-lg border border-border/50">
                 <div className="text-center">
-                  <div className={`text-3xl font-mono font-bold ${isBreak ? 'text-green-400' : 'text-text-primary'}`}>
+                  <div className={`text-3xl font-mono font-bold ${isBreak ? 'text-emerald-500' : 'text-text-primary'}`}>
                     {formatTime(pomodoroTime)}
                   </div>
                   <div className="text-xs text-text-secondary mt-1">
@@ -392,7 +392,7 @@ export function Sidebar({
                   ) : (
                     <button
                       onClick={pauseTimer}
-                      className="flex-1 p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
                     >
                       <Pause className="w-4 h-4" />
                       Pausar
@@ -426,7 +426,7 @@ export function Sidebar({
                       pauseTimer();
                     }}
                     className={`flex-1 p-2 text-xs rounded-lg transition-colors ${
-                      isBreak ? 'bg-green-500 text-white' : 'bg-surface hover:bg-hover text-text-secondary'
+                      isBreak ? 'bg-emerald-500 text-white' : 'bg-surface hover:bg-hover text-text-secondary'
                     }`}
                   >
                     5min Pausa

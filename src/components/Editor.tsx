@@ -32,9 +32,10 @@ interface EditorProps {
   note: Note | null;
   onUpdateNote: (id: string, updates: Partial<Note>) => void;
   onToggleSidebar: () => void;
+  currentThemeId: string;
 }
 
-export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
+export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: EditorProps) {
   const [mode, setMode] = useState<'visual' | 'markdown'>('visual');
   const [slashMenu, setSlashMenu] = useState<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -43,6 +44,8 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   const [isGlobalPlaying, setIsGlobalPlaying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingFromNote = useRef(false);
+
+  const isDarkTheme = currentThemeId === 'zinc';
 
   // Use refs to avoid stale closures in Tiptap handlers
   const slashMenuRef = useRef(slashMenu);
@@ -139,7 +142,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert prose-zinc max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800 prose-a:text-[var(--accent-primary)] hover:prose-a:opacity-80 prose-img:rounded-xl prose-img:border prose-img:border-zinc-800',
+        class: `prose ${isDarkTheme ? 'prose-invert prose-zinc' : 'prose-slate'} max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-[var(--bg-surface)] prose-pre:border prose-pre:border-[var(--border-color)] prose-a:text-[var(--accent-primary)] hover:prose-a:opacity-80 prose-img:rounded-xl prose-img:border prose-img:border-[var(--border-color)]`,
       },
       handleKeyDown: (view, event) => {
         if (event.key === '/') {
@@ -203,7 +206,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
 
   if (!note) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 text-zinc-500">
+      <div className="flex-1 flex flex-col items-center justify-center bg-[var(--bg-primary)] text-[var(--text-muted)]">
         <FileText className="w-16 h-16 mb-4 opacity-20" />
         <p className="text-lg font-medium">Selecione uma nota ou crie uma nova</p>
       </div>
@@ -377,7 +380,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-zinc-950 overflow-hidden relative">
+    <div className="flex-1 flex flex-col h-screen bg-[var(--bg-primary)] overflow-hidden relative">
       <EditorTopBar
         note={note}
         mode={mode}
@@ -422,32 +425,32 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
         {mode === 'markdown' ? (
           <div className="w-full h-full flex flex-col">
             {/* Full-width toolbar for Markdown mode */}
-            <div className="w-full flex-none bg-zinc-900/50 border-b border-zinc-800 p-2 flex items-center gap-1 overflow-x-auto scrollbar-hide">
-              <button onClick={() => applyMarkdownStyle('# ', '')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Título 1 (# texto)"><Heading1 className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('## ', '')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Título 2 (## texto)"><Heading2 className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('### ', '')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Título 3 (### texto)"><Heading3 className="w-4 h-4" /></button>
-              <div className="w-px h-4 bg-zinc-800 mx-1" />
-              <button onClick={() => applyMarkdownStyle('**')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Negrito (**texto**)"><Bold className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('*')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Itálico (*texto*)"><Italic className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('<u>', '</u>')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Sublinhado (<u>texto</u>)"><Underline className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('~~')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Tachado (~~texto~~)"><Strikethrough className="w-4 h-4" /></button>
-              <div className="w-px h-4 bg-zinc-800 mx-1" />
-              <button onClick={() => applyMarkdownStyle('[', '](url)')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Link ([texto](url))"><LinkIcon className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('`', '`')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Código inline (`código`)"><Code className="w-4 h-4" /></button>
-              <button onClick={() => insertMarkdownSnippet('\n```\n\n```\n')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Bloco de código (```código```)"><FileCode2 className="w-4 h-4" /></button>
-              <div className="w-px h-4 bg-zinc-800 mx-1" />
-              <button onClick={() => applyMarkdownStyle('- ', '')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Lista (- item)"><List className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('1. ', '')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Lista numerada (1. item)"><ListOrdered className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('- [ ] ', '')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Checklist (- [ ] item)"><CheckSquare className="w-4 h-4" /></button>
-              <div className="w-px h-4 bg-zinc-800 mx-1" />
-              <button onClick={() => applyMarkdownStyle('> ', '')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Citação (> texto)"><Quote className="w-4 h-4" /></button>
-              <button onClick={() => insertMarkdownSnippet('\n---\n')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Divisor (---)"><Minus className="w-4 h-4" /></button>
-              <button onClick={() => insertMarkdownSnippet('\n| Coluna 1 | Coluna 2 |\n|----------|----------|\n| Dado 1   | Dado 2   |\n')} className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors" title="Tabela"><TableIcon className="w-4 h-4" /></button>
+            <div className="w-full flex-none bg-[var(--bg-surface)] border-b border-[var(--border-color)] p-2 flex items-center gap-1 overflow-x-auto scrollbar-hide">
+              <button onClick={() => applyMarkdownStyle('# ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Título 1 (# texto)"><Heading1 className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('## ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Título 2 (## texto)"><Heading2 className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('### ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Título 3 (### texto)"><Heading3 className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => applyMarkdownStyle('**')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Negrito (**texto**)"><Bold className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('*')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Itálico (*texto*)"><Italic className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('<u>', '</u>')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Sublinhado (<u>texto</u>)"><Underline className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('~~')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Tachado (~~texto~~)"><Strikethrough className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => applyMarkdownStyle('[', '](url)')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Link ([texto](url))"><LinkIcon className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('`', '`')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Código inline (`código`)"><Code className="w-4 h-4" /></button>
+              <button onClick={() => insertMarkdownSnippet('\n```\n\n```\n')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Bloco de código (```código```)"><FileCode2 className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => applyMarkdownStyle('- ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Lista (- item)"><List className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('1. ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Lista numerada (1. item)"><ListOrdered className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('- [ ] ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Checklist (- [ ] item)"><CheckSquare className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => applyMarkdownStyle('> ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Citação (> texto)"><Quote className="w-4 h-4" /></button>
+              <button onClick={() => insertMarkdownSnippet('\n---\n')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Divisor (---)"><Minus className="w-4 h-4" /></button>
+              <button onClick={() => insertMarkdownSnippet('\n| Coluna 1 | Coluna 2 |\n|----------|----------|\n| Dado 1   | Dado 2   |\n')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Tabela"><TableIcon className="w-4 h-4" /></button>
               
               <div className="flex-1" />
               <button 
                 onClick={() => setShowCheatsheet(true)} 
-                className="p-1.5 rounded hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors flex items-center gap-2 text-xs font-medium pr-3" 
+                className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2 text-xs font-medium pr-3" 
                 title="Guia de Markdown"
               >
                 <HelpCircle className="w-4 h-4" />
@@ -461,7 +464,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
                 onChange={handleMarkdownChange}
                 onKeyDown={handleTextareaKeyDown}
                 placeholder="Comece a escrever em Markdown..."
-                className="absolute inset-0 w-full h-full p-8 bg-transparent text-zinc-300 font-mono text-sm leading-relaxed resize-none focus:outline-none placeholder-zinc-700"
+                className="absolute inset-0 w-full h-full p-8 bg-transparent text-[var(--text-primary)] font-mono text-sm leading-relaxed resize-none focus:outline-none placeholder-[var(--text-muted)]"
                 spellCheck="false"
               />
             </div>
@@ -476,56 +479,56 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
       <div className="sm:hidden fixed bottom-6 right-6 z-20">
         <button
           onClick={() => setMode(mode === 'visual' ? 'markdown' : 'visual')}
-          className="bg-zinc-100 text-zinc-900 p-4 rounded-full shadow-lg shadow-black/50 hover:bg-white transition-colors"
+          className="bg-[var(--text-primary)] text-[var(--bg-primary)] p-4 rounded-full shadow-lg shadow-black/50 hover:opacity-90 transition-colors"
         >
           {mode === 'markdown' ? <Type className="w-6 h-6" /> : <Code className="w-6 h-6" />}
         </button>
       </div>
 
       {showCheatsheet && (
-        <div className="absolute inset-0 z-50 bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
                 <Code className="w-5 h-5 text-[var(--accent-primary)]" />
                 Guia Rápido de Markdown
               </h3>
-              <button onClick={() => setShowCheatsheet(false)} className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors">
+              <button onClick={() => setShowCheatsheet(false)} className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 overflow-y-auto text-sm text-zinc-300 space-y-6">
+            <div className="p-4 overflow-y-auto text-sm text-[var(--text-primary)] space-y-6">
               <div>
-                <h4 className="text-zinc-100 font-medium mb-2 uppercase tracking-wider text-xs">Formatação Básica</h4>
+                <h4 className="text-[var(--text-primary)] font-medium mb-2 uppercase tracking-wider text-xs">Formatação Básica</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="flex justify-between bg-zinc-950 p-2 rounded border border-zinc-800/50"><span>**Negrito**</span> <span className="font-bold text-zinc-100">Negrito</span></div>
-                  <div className="flex justify-between bg-zinc-950 p-2 rounded border border-zinc-800/50"><span>*Itálico*</span> <span className="italic text-zinc-100">Itálico</span></div>
-                  <div className="flex justify-between bg-zinc-950 p-2 rounded border border-zinc-800/50"><span>~~Tachado~~</span> <span className="line-through text-zinc-100">Tachado</span></div>
-                  <div className="flex justify-between bg-zinc-950 p-2 rounded border border-zinc-800/50"><span>`Código`</span> <span className="font-mono bg-zinc-800 px-1 rounded text-zinc-100">Código</span></div>
+                  <div className="flex justify-between bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]"><span>**Negrito**</span> <span className="font-bold text-[var(--text-primary)]">Negrito</span></div>
+                  <div className="flex justify-between bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]"><span>*Itálico*</span> <span className="italic text-[var(--text-primary)]">Itálico</span></div>
+                  <div className="flex justify-between bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]"><span>~~Tachado~~</span> <span className="line-through text-[var(--text-primary)]">Tachado</span></div>
+                  <div className="flex justify-between bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]"><span>`Código`</span> <span className="font-mono bg-[var(--bg-hover)] px-1 rounded text-[var(--text-primary)]">Código</span></div>
                 </div>
               </div>
               
               <div>
-                <h4 className="text-zinc-100 font-medium mb-2 uppercase tracking-wider text-xs">Títulos</h4>
+                <h4 className="text-[var(--text-primary)] font-medium mb-2 uppercase tracking-wider text-xs">Títulos</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center bg-zinc-950 p-2 rounded border border-zinc-800/50"><span># Título 1</span> <span className="text-xl font-bold text-zinc-100">Título 1</span></div>
-                  <div className="flex justify-between items-center bg-zinc-950 p-2 rounded border border-zinc-800/50"><span>## Título 2</span> <span className="text-lg font-bold text-zinc-100">Título 2</span></div>
-                  <div className="flex justify-between items-center bg-zinc-950 p-2 rounded border border-zinc-800/50"><span>### Título 3</span> <span className="text-base font-bold text-zinc-100">Título 3</span></div>
+                  <div className="flex justify-between items-center bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]"><span># Título 1</span> <span className="text-xl font-bold text-[var(--text-primary)]">Título 1</span></div>
+                  <div className="flex justify-between items-center bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]"><span>## Título 2</span> <span className="text-lg font-bold text-[var(--text-primary)]">Título 2</span></div>
+                  <div className="flex justify-between items-center bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]"><span>### Título 3</span> <span className="text-base font-bold text-[var(--text-primary)]">Título 3</span></div>
                 </div>
               </div>
 
               <div>
-                <h4 className="text-zinc-100 font-medium mb-2 uppercase tracking-wider text-xs">Listas</h4>
+                <h4 className="text-[var(--text-primary)] font-medium mb-2 uppercase tracking-wider text-xs">Listas</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="bg-zinc-950 p-2 rounded border border-zinc-800/50 flex flex-col gap-1">
+                  <div className="bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)] flex flex-col gap-1">
                     <span>- Item 1</span>
                     <span>- Item 2</span>
                   </div>
-                  <div className="bg-zinc-950 p-2 rounded border border-zinc-800/50 flex flex-col gap-1">
+                  <div className="bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)] flex flex-col gap-1">
                     <span>1. Primeiro</span>
                     <span>2. Segundo</span>
                   </div>
-                  <div className="bg-zinc-950 p-2 rounded border border-zinc-800/50 flex flex-col gap-1 sm:col-span-2">
+                  <div className="bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)] flex flex-col gap-1 sm:col-span-2">
                     <span>- [ ] Tarefa pendente</span>
                     <span>- [x] Tarefa concluída</span>
                   </div>
@@ -533,27 +536,27 @@ export function Editor({ note, onUpdateNote, onToggleSidebar }: EditorProps) {
               </div>
 
               <div>
-                <h4 className="text-zinc-100 font-medium mb-2 uppercase tracking-wider text-xs">Outros Elementos</h4>
+                <h4 className="text-[var(--text-primary)] font-medium mb-2 uppercase tracking-wider text-xs">Outros Elementos</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center bg-zinc-950 p-2 rounded border border-zinc-800/50">
+                  <div className="flex justify-between items-center bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]">
                     <span>[Link](https://...)</span>
                     <span className="text-[var(--accent-primary)] underline">Link</span>
                   </div>
-                  <div className="flex justify-between items-center bg-zinc-950 p-2 rounded border border-zinc-800/50">
+                  <div className="flex justify-between items-center bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]">
                     <span>&gt; Citação</span>
-                    <span className="border-l-2 border-zinc-600 pl-2 text-zinc-400">Citação</span>
+                    <span className="border-l-2 border-[var(--border-color)] pl-2 text-[var(--text-secondary)]">Citação</span>
                   </div>
-                  <div className="flex justify-between items-center bg-zinc-950 p-2 rounded border border-zinc-800/50">
+                  <div className="flex justify-between items-center bg-[var(--bg-primary)] p-2 rounded border border-[var(--border-color)]">
                     <span>--- (Três traços)</span>
-                    <span className="text-zinc-500 text-xs">Linha divisória</span>
+                    <span className="text-[var(--text-muted)] text-xs">Linha divisória</span>
                   </div>
                 </div>
               </div>
               
               <div className="bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 p-3 rounded-lg flex items-start gap-3">
                 <div className="mt-0.5">💡</div>
-                <p className="text-sm text-zinc-300">
-                  <strong>Dica Pro:</strong> Você também pode digitar <kbd className="bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded text-xs font-mono">/</kbd> em uma linha vazia para abrir o menu rápido de comandos!
+                <p className="text-sm text-[var(--text-primary)]">
+                  <strong>Dica Pro:</strong> Você também pode digitar <kbd className="bg-[var(--bg-hover)] border border-[var(--border-color)] px-1.5 py-0.5 rounded text-xs font-mono">/</kbd> em uma linha vazia para abrir o menu rápido de comandos!
                 </p>
               </div>
             </div>
