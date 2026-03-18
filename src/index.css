@@ -30,15 +30,15 @@
   --color-text-muted: var(--text-muted);
   --color-border: var(--border-color);
   --color-accent: var(--accent-primary);
-  --color-accent-contrast: #FFFFFF; /* Corrigido para branco para alto contraste */
+  --color-accent-contrast: var(--accent-contrast, #FFFFFF);
 }
 
 :root {
   --bg-primary: #09090b;
   --bg-surface: #18181b;
   --bg-hover: #27272a;
-  --accent-primary: #10b981;
-  --accent-soft: #ecfdf5;
+  --accent-primary: #3c61dd;
+  --accent-soft: rgba(60, 97, 221, 0.1);
   --text-primary: #f4f4f5;
   --text-secondary: #a1a1aa;
   --text-muted: #52525b;
@@ -54,16 +54,27 @@ body {
 
 @layer base {
   .prose table {
-    @apply border-collapse border w-full my-4;
+    @apply border-collapse w-full my-6 text-sm overflow-hidden rounded-lg border;
     border-color: var(--border-color);
   }
-  .prose th, .prose td {
-    @apply border p-2 text-left;
+  .prose thead {
+    @apply bg-[var(--bg-surface)] border-b;
     border-color: var(--border-color);
   }
   .prose th {
-    @apply font-semibold;
-    background-color: rgba(24, 24, 27, 0.5); /* fallback */
+    @apply font-bold px-4 py-3 text-left text-[var(--text-primary)] uppercase tracking-wider text-xs;
+    padding: 0.75rem 1rem !important;
+  }
+  .prose td {
+    @apply px-4 py-3 border-t text-[var(--text-secondary)];
+    padding: 0.75rem 1rem !important;
+    border-color: var(--border-color);
+  }
+  .prose tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+  .prose tr:hover td {
+    @apply bg-[var(--bg-hover)]/30 text-[var(--text-primary)] transition-colors;
   }
   
   /* Tiptap specific table styles */
@@ -131,17 +142,26 @@ body {
   }
 
   .ProseMirror table {
-    @apply border-collapse table-fixed w-full overflow-hidden m-0;
+    @apply border-collapse table-auto w-full overflow-hidden my-4 rounded-lg border;
+    border-color: var(--border-color);
   }
   
   .ProseMirror td, .ProseMirror th {
-    @apply min-w-[1em] border p-2 align-top box-border relative;
+    @apply min-w-[1em] border px-4 py-3 align-top box-border relative text-sm;
+    padding: 0.75rem 1rem !important;
     border-color: var(--border-color);
   }
   
   .ProseMirror th {
-    @apply font-bold text-left;
-    background-color: rgba(24, 24, 27, 0.5);
+    @apply font-bold text-left bg-[var(--bg-surface)] text-[var(--text-primary)] uppercase tracking-wider text-xs;
+  }
+
+  .ProseMirror tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  .ProseMirror tr:hover td {
+    @apply bg-[var(--bg-hover)]/30 transition-colors;
   }
   
   .ProseMirror .selectedCell:after {

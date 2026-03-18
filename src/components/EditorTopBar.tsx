@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Play, Pause, BookAudio, Undo, Redo } from 'lucide-react';
+import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo } from 'lucide-react';
 import { Note } from '../types';
 
 interface EditorTopBarProps {
@@ -115,7 +115,7 @@ export function EditorTopBar({
               }`}
               title={isGlobalPlaying ? "Pausar música/foco" : "Tocar música/foco"}
             >
-              {isGlobalPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isGlobalPlaying ? <Pause className="w-5 h-5" /> : <Music className="w-5 h-5" />}
             </button>
           )}
 
@@ -129,7 +129,7 @@ export function EditorTopBar({
               }`}
               title={isReading ? "Parar leitura" : "Ler nota em voz alta"}
             >
-              <BookAudio className="w-5 h-5" />
+              <Speech className="w-5 h-5" />
             </button>
           )}
 

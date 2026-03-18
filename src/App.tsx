@@ -6,7 +6,7 @@ import { WelcomeModal } from './components/WelcomeModal';
 import { ResetModal } from './components/ResetModal';
 import { SettingsModal } from './components/SettingsModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { Note, INITIAL_NOTE, THEMES, ThemeId } from './types';
+import { Note, Folder, INITIAL_NOTE, THEMES, ThemeId } from './types';
 
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
@@ -14,6 +14,7 @@ export default function App() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
+  const [folders, setFolders] = useLocalStorage<Folder[]>('nox-folders', []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [currentThemeId, setCurrentThemeId] = useLocalStorage<ThemeId>('nox-theme', 'zinc');
@@ -33,6 +34,26 @@ export default function App() {
     root.style.setProperty('--text-muted', theme.colors.textMuted);
     root.style.setProperty('--border-color', theme.colors.border);
     root.style.setProperty('--app-font', theme.font);
+    
+    // Calculate contrast color for accent
+    const isDarkTheme = theme.isDark;
+    const accentContrast = isDarkTheme ? '#FFFFFF' : (theme.id === 'zinc' ? '#FFFFFF' : '#FFFFFF');
+    
+    // For light themes with dark accent (like Olive), we might want white text.
+    // For light themes with light accent, we might want dark text.
+    // But usually, the accent colors provided are meant to have white text on them.
+    // Let's refine this:
+    if (theme.id === 'zinc') {
+      root.style.setProperty('--accent-contrast', '#FFFFFF');
+    } else if (theme.id === 'sapphire') {
+      root.style.setProperty('--accent-contrast', '#FFFFFF');
+    } else if (theme.id === 'olive') {
+      root.style.setProperty('--accent-contrast', '#FFFFFF');
+    } else if (theme.id === 'sakura') {
+      root.style.setProperty('--accent-contrast', '#FFFFFF');
+    } else {
+      root.style.setProperty('--accent-contrast', isDarkTheme ? '#FFFFFF' : '#000000');
+    }
     
     // Update body font
     document.body.style.fontFamily = theme.font;
@@ -91,10 +112,40 @@ export default function App() {
 
   const handleResetData = () => {
     setNotes([INITIAL_NOTE]);
+    setFolders([]);
     setActiveNoteId(null);
     setIsFirstVisit(true);
     setShowResetModal(false);
     setIsSidebarOpen(false);
+  };
+
+  const handleCreateFolder = () => {
+    const newFolder: Folder = {
+      id: uuidv4(),
+      name: 'Nova Pasta',
+      createdAt: Date.now(),
+    };
+    setFolders((prev) => [newFolder, ...prev]);
+  };
+
+  const handleUpdateFolder = (id: string, updates: Partial<Folder>) => {
+    setFolders((prev) =>
+      prev.map((folder) => (folder.id === id ? { ...folder, ...updates } : folder))
+    );
+  };
+
+  const handleDeleteFolder = (id: string) => {
+    setFolders((prev) => prev.filter((folder) => folder.id !== id));
+    // Move notes in this folder to uncategorized
+    setNotes((prev) =>
+      prev.map((note) => (note.folderId === id ? { ...note, folderId: undefined } : note))
+    );
+  };
+
+  const handleMoveNoteToFolder = (noteId: string, folderId?: string) => {
+    setNotes((prev) =>
+      prev.map((note) => (note.id === noteId ? { ...note, folderId } : note))
+    );
   };
 
   const handleImport = (importedNotes: Note[]) => {
@@ -136,6 +187,7 @@ export default function App() {
       
       <Sidebar
         notes={notes}
+        folders={folders}
         activeNoteId={activeNoteId}
         onSelectNote={(id) => {
           setActiveNoteId(id);
@@ -143,6 +195,10 @@ export default function App() {
         }}
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
+        onCreateFolder={handleCreateFolder}
+        onUpdateFolder={handleUpdateFolder}
+        onDeleteFolder={handleDeleteFolder}
+        onMoveNoteToFolder={handleMoveNoteToFolder}
         onBackup={handleBackup}
         onImport={handleImport}
         onShowInfo={() => setShowWelcomeModal(true)}

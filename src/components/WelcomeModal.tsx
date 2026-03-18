@@ -12,7 +12,7 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Bem-vindo ao Nox</h2>
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)]">Sobre NoxNote</h2>
           <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
             Seu novo bloco de notas focado em privacidade e velocidade.
           </p>
@@ -71,17 +71,28 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
           </div>
         )}
 
-        <button
-          onClick={onAccept}
-          disabled={isFirstVisit && !hasConsented}
-          className={`w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--text-muted)] focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)] ${
-            isFirstVisit && !hasConsented
-              ? 'bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-not-allowed'
-              : 'bg-[var(--accent-primary)] hover:opacity-90 text-[var(--bg-primary)]'
-          }`}
-        >
-          {isFirstVisit ? 'Começar a usar' : 'Fechar'}
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={onAccept}
+            disabled={isFirstVisit && !hasConsented}
+            className={`w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--text-muted)] focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)] ${
+              isFirstVisit && !hasConsented
+                ? 'bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-not-allowed'
+                : 'bg-[var(--accent-primary)] hover:opacity-90 text-[var(--accent-contrast)]'
+            }`}
+          >
+            {isFirstVisit ? 'Começar a usar' : 'Fechar'}
+          </button>
+          
+          <a
+            href="https://appsforall.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center text-xs text-[var(--text-secondary)] hover:text-[var(--accent-primary)] transition-colors"
+          >
+            mais web apps como esse
+          </a>
+        </div>
       </div>
     </div>
   );

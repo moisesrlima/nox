@@ -29,7 +29,7 @@ export const THEMES: Theme[] = [
       surface: '#18181b',
       hover: '#27272a',
       active: '#3f3f46',
-      accent: '#000000',
+      accent: '#3c61dd',
       accentSoft: '#27272a',
       textPrimary: '#f4f4f5',
       textSecondary: '#a1a1aa',
@@ -94,12 +94,19 @@ export const THEMES: Theme[] = [
   },
 ];
 
+export interface Folder {
+  id: string;
+  name: string;
+  createdAt: number;
+}
+
 export interface Note {
   id: string;
   title: string;
   content: string;
   createdAt: number;
   updatedAt: number;
+  folderId?: string;
 }
 
 export const INITIAL_NOTE: Note = {

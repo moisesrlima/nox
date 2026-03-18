@@ -295,9 +295,12 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
           pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; }
           code { font-family: monospace; background: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 3px; }
           blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f4f4f4; }
+          table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.9rem; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+          th, td { border: 1px solid #e5e7eb; padding: 12px; text-align: left; }
+          th { background-color: #f9fafb; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; color: #374151; }
+          td { color: #4b5563; }
+          tr:nth-child(even) { background-color: #fcfcfc; }
+          tr:hover { background-color: #f9fafb; }
         </style>
       </head>
       <body>
