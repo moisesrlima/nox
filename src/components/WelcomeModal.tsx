@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Download, CheckCircle2 } from 'lucide-react';
 
 interface WelcomeModalProps {
   onAccept: () => void;
@@ -7,6 +8,48 @@ interface WelcomeModalProps {
 
 export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
   const [hasConsented, setHasConsented] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsInstalled(true);
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -72,6 +115,23 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
         )}
 
         <div className="space-y-3">
+          <div className="flex justify-center pb-2">
+            {isInstalled ? (
+              <div className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-lg text-sm font-medium border border-emerald-500/20">
+                <CheckCircle2 className="w-4 h-4" />
+                App Instalado
+              </div>
+            ) : isInstallable ? (
+              <button
+                onClick={handleInstallClick}
+                className="flex items-center gap-2 text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-[var(--accent-primary)]/20"
+              >
+                <Download className="w-4 h-4" />
+                Instalar App
+              </button>
+            ) : null}
+          </div>
+
           <button
             onClick={onAccept}
             disabled={isFirstVisit && !hasConsented}
