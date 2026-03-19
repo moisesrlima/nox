@@ -141,6 +141,52 @@ body {
     font-size: 0.875rem;
   }
 
+  .ProseMirror hr {
+    border: none;
+    border-top: 2px dashed var(--text-muted);
+    margin: 3rem 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.6;
+    position: relative;
+    overflow: visible;
+  }
+
+  .ProseMirror hr::after {
+    content: 'Quebra de Página';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-primary);
+    padding: 0 0.75rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .ProseMirror hr:hover {
+    border-top-color: var(--accent-primary);
+    opacity: 1;
+  }
+
+  .ProseMirror hr:hover::after {
+    color: var(--accent-primary);
+  }
+
+  .ProseMirror hr.ProseMirror-selectednode {
+    border-top: 2px solid var(--accent-primary);
+    opacity: 1;
+  }
+
+  .ProseMirror hr.ProseMirror-selectednode::after {
+    color: var(--accent-primary);
+  }
+
   .ProseMirror table {
     @apply border-collapse table-auto w-full overflow-hidden my-4 rounded-lg border;
     border-color: var(--border-color);

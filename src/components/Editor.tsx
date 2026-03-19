@@ -5,7 +5,7 @@ import { Note } from '../types';
 import { 
   Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
   Bold, Italic, Underline, Link as LinkIcon, Search,
-  Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon,
+  Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon, Image as ImageIcon,
   HelpCircle, X
 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
@@ -21,6 +21,7 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import Image from '@tiptap/extension-image';
 import { Markdown } from 'tiptap-markdown';
 import { getSlashCommands, CommandItem } from './EditorCommands';
 import { EditorTopBar } from './EditorTopBar';
@@ -43,6 +44,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
   const [isReading, setIsReading] = useState(false);
   const [isGlobalPlaying, setIsGlobalPlaying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const isUpdatingFromNote = useRef(false);
 
   const isDarkTheme = currentThemeId === 'zinc';
@@ -74,6 +76,9 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
         case 'checklist': editor.commands.toggleTaskList(); break;
         case 'código': case 'codeblock': editor.commands.toggleCodeBlock(); break;
         case 'divisor': case 'hr': editor.commands.setHorizontalRule(); break;
+        case 'imagem': case 'image':
+          handleImageInsert(true);
+          break;
         case 'tabela': case 'table': 
           editor.commands.insertContent('| Produto | Quantidade | Preço |\n|---------|------------|-------|\n| Maçã    | 10         | R$ 2  |\n| Banana  | 5          | R$ 3  |\n| Laranja | 8          | R$ 4  |');
           break;
@@ -92,6 +97,9 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
         case 'lista': case 'list': snippet = '- '; break;
         case 'checklist': snippet = '- [ ] '; break;
         case 'código': case 'codeblock': snippet = '\n```\n\n```\n'; break;
+        case 'imagem': case 'image':
+          handleImageInsert(true);
+          return; // handleImageInsert will handle the update
         case 'divisor': case 'hr': snippet = '\n---\n'; break;
         case 'tabela': case 'table': snippet = '| Produto | Quantidade | Preço |\n|---------|------------|-------|\n| Maçã    | 10         | R$ 2  |\n| Banana  | 5          | R$ 3  |\n| Laranja | 8          | R$ 4  |'; break;
       }
@@ -123,6 +131,12 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
         nested: true,
       }),
       Markdown,
+      Image.configure({
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'rounded-xl border border-[var(--border-color)] shadow-sm max-w-full h-auto my-4',
+        },
+      }),
       Table.configure({
         resizable: true,
       }),
@@ -196,6 +210,66 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
       isUpdatingFromNote.current = false;
     }
   }, [note?.id, editor]);
+
+  const handleImageInsert = (isSlash: boolean = false) => {
+    const choice = window.confirm('Deseja fazer upload de uma imagem do seu computador? (Clique em Cancelar para inserir via link)');
+    if (choice) {
+      // Store whether it was a slash command to handle replacement correctly
+      (imageInputRef.current as any)._isSlash = isSlash;
+      imageInputRef.current?.click();
+    } else {
+      const url = window.prompt('Insira a URL da imagem:');
+      if (url) {
+        insertImage(url, isSlash);
+      }
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    const isSlash = (event.target as any)._isSlash || false;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        insertImage(base64, isSlash);
+      };
+      reader.readAsDataURL(file);
+    }
+    event.target.value = '';
+    (event.target as any)._isSlash = false;
+  };
+
+  const insertImage = (src: string, isSlash: boolean = false) => {
+    if (mode === 'visual' && editor) {
+      editor.chain().focus().setImage({ src }).run();
+    } else if (mode === 'markdown' && note) {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const snippet = `\n![imagem](${src})\n`;
+      
+      // If it's a slash command, we need to remove the '/'
+      const newContent = isSlash 
+        ? note.content.substring(0, start - 1) + snippet + note.content.substring(end)
+        : note.content.substring(0, start) + snippet + note.content.substring(end);
+        
+      onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
+      
+      if (editor) {
+        isUpdatingFromNote.current = true;
+        editor.commands.setContent(newContent);
+        isUpdatingFromNote.current = false;
+      }
+
+      setTimeout(() => {
+        textarea.focus();
+        const newPos = isSlash ? start - 1 + snippet.length : start + snippet.length;
+        textarea.setSelectionRange(newPos, newPos);
+      }, 0);
+    }
+  };
 
   // Default to visual mode when switching notes
   useEffect(() => {
@@ -301,6 +375,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
           td { color: #4b5563; }
           tr:nth-child(even) { background-color: #fcfcfc; }
           tr:hover { background-color: #f9fafb; }
+          hr { break-after: page; page-break-after: always; border: none; border-top: 1px solid #e5e7eb; margin: 2rem 0; }
         </style>
       </head>
       <body>
@@ -333,6 +408,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
       table { border-collapse: collapse; width: 100%; }
       th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
       th { background-color: #f4f4f4; }
+      hr { break-after: page; page-break-after: always; border: none; margin: 0; height: 0; }
     `;
     element.appendChild(style);
     const opt = {
@@ -410,6 +486,13 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
       />
 
       <div className="flex-1 overflow-hidden relative">
+        <input 
+          type="file" 
+          ref={imageInputRef} 
+          onChange={handleImageUpload} 
+          accept="image/*" 
+          className="hidden" 
+        />
         {editor && mode === 'visual' && (
           <EditorBubbleMenu editor={editor} />
         )}
@@ -448,6 +531,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
               <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
               <button onClick={() => applyMarkdownStyle('> ', '')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Citação (> texto)"><Quote className="w-4 h-4" /></button>
               <button onClick={() => insertMarkdownSnippet('\n---\n')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Divisor (---)"><Minus className="w-4 h-4" /></button>
+              <button onClick={() => handleImageInsert()} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Imagem (![alt](url))"><ImageIcon className="w-4 h-4" /></button>
               <button onClick={() => insertMarkdownSnippet('\n| Coluna 1 | Coluna 2 |\n|----------|----------|\n| Dado 1   | Dado 2   |\n')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Tabela"><TableIcon className="w-4 h-4" /></button>
               
               <div className="flex-1" />

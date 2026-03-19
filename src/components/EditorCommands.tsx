@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Table, List, Heading1, Heading2, Minus, CheckSquare, Code
+  Table, List, Heading1, Heading2, Minus, CheckSquare, Code, Image
 } from 'lucide-react';
 
 export interface CommandItem {
@@ -34,6 +34,12 @@ export const getSlashCommands = (onSelect: (cmd: string) => void): CommandItem[]
     description: 'Lista de tarefas',
     icon: <CheckSquare className="w-4 h-4" />,
     command: () => onSelect('checklist'),
+  },
+  {
+    title: 'Imagem',
+    description: 'Inserir imagem (link ou upload)',
+    icon: <Image className="w-4 h-4" />,
+    command: () => onSelect('image'),
   },
   {
     title: 'Código',
