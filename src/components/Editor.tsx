@@ -8,7 +8,7 @@ import {
   Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon, Image as ImageIcon,
   HelpCircle, X, Undo, Redo
 } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import html2canvas from 'html2canvas';
 
 // Tiptap imports
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -45,6 +45,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showCheatsheet, setShowCheatsheet] = useState(false);
   const [isReading, setIsReading] = useState(false);
+  const [readingSpeed, setReadingSpeed] = useState<number>(1);
   const [isGlobalPlaying, setIsGlobalPlaying] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -521,30 +522,35 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     `;
     element.appendChild(style);
 
-    // Temporarily append to body to get correct dimensions for html-to-image
+    // Temporarily append to body to get correct dimensions for html2canvas
     element.style.position = 'absolute';
     element.style.left = '-9999px';
     element.style.top = '-9999px';
     document.body.appendChild(element);
 
-    // Use html-to-image to get a PNG
-    toPng(element, {
-      quality: 1,
-      pixelRatio: 2,
-      width: 1080,
-      height: Math.max(1350, element.scrollHeight)
-    }).then((dataUrl) => {
-      document.body.removeChild(element);
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `${note.title || 'nota'}.png`;
-      link.click();
-    }).catch((err) => {
-      console.error('Error exporting image:', err);
-      if (document.body.contains(element)) {
+    // Wait a brief moment to ensure styles are applied
+    setTimeout(() => {
+      html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 1080,
+        height: Math.max(1350, element.scrollHeight),
+        windowWidth: 1080
+      }).then((canvas) => {
         document.body.removeChild(element);
-      }
-    });
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `${note.title || 'nota'}.png`;
+        link.click();
+      }).catch((err) => {
+        console.error('Error exporting image:', err);
+        if (document.body.contains(element)) {
+          document.body.removeChild(element);
+        }
+      });
+    }, 100);
   };
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -597,12 +603,23 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
         onExportPdf={exportPdf}
         onExportImage={exportImage}
         isReading={isReading}
+        readingSpeed={readingSpeed}
         isGlobalPlaying={isGlobalPlaying}
         onToggleReading={() => {
           if (isReading) {
             stopReading({ onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
           } else {
-            readNote({ note, mode, editor, onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+            readNote({ note, mode, editor, speed: readingSpeed, onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+          }
+        }}
+        onChangeReadingSpeed={() => {
+          const nextSpeed = readingSpeed === 1 ? 2 : readingSpeed === 2 ? 3 : 1;
+          setReadingSpeed(nextSpeed);
+          if (isReading) {
+            stopReading({ onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+            setTimeout(() => {
+              readNote({ note, mode, editor, speed: nextSpeed, onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+            }, 100);
           }
         }}
         onGlobalPlayPause={handleGlobalPlayPause}

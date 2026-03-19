@@ -12,12 +12,14 @@ export function readNote({
   note,
   mode,
   editor,
+  speed = 1,
   onReadingChange,
   onGlobalPlayingChange
 }: {
   note: any;
   mode: 'visual' | 'markdown';
   editor?: any;
+  speed?: number;
   onReadingChange: (isReading: boolean) => void;
   onGlobalPlayingChange: (isPlaying: boolean) => void;
 }) {
@@ -38,7 +40,7 @@ export function readNote({
     
     const utterance = new SpeechSynthesisUtterance(textToRead);
     utterance.lang = 'pt-BR';
-    utterance.rate = 1;
+    utterance.rate = speed;
     utterance.pitch = 1;
     
     utterance.onstart = () => {

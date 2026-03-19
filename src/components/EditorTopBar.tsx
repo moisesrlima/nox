@@ -15,8 +15,10 @@ interface EditorTopBarProps {
   onExportPdf: () => void;
   onExportImage: () => void;
   isReading?: boolean;
+  readingSpeed?: number;
   isGlobalPlaying?: boolean;
   onToggleReading?: () => void;
+  onChangeReadingSpeed?: () => void;
   onGlobalPlayPause?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
@@ -35,8 +37,10 @@ export function EditorTopBar({
   onExportPdf,
   onExportImage,
   isReading = false,
+  readingSpeed = 1,
   isGlobalPlaying = false,
   onToggleReading,
+  onChangeReadingSpeed,
   onGlobalPlayPause,
   onUndo,
   onRedo,
@@ -122,17 +126,28 @@ export function EditorTopBar({
           )}
 
           {onToggleReading && (
-            <button
-              onClick={onToggleReading}
-              className={`p-2 rounded-lg transition-colors ${
-                isReading 
-                  ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
-              }`}
-              title={isReading ? "Parar leitura" : "Ler nota em voz alta"}
-            >
-              <Speech className="w-5 h-5" />
-            </button>
+            <div className="flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)]">
+              <button
+                onClick={onToggleReading}
+                className={`p-1.5 rounded-md transition-colors ${
+                  isReading 
+                    ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+                }`}
+                title={isReading ? "Parar leitura" : "Ler nota em voz alta"}
+              >
+                <Speech className="w-5 h-5" />
+              </button>
+              {onChangeReadingSpeed && (
+                <button
+                  onClick={onChangeReadingSpeed}
+                  className="px-2 py-1 text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors min-w-[32px]"
+                  title="Velocidade de leitura"
+                >
+                  {readingSpeed}x
+                </button>
+              )}
+            </div>
           )}
 
           <div className="relative group">
