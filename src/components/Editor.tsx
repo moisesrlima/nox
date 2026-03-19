@@ -6,7 +6,7 @@ import {
   Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
   Bold, Italic, Underline, Link as LinkIcon, Search,
   Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon, Image as ImageIcon,
-  HelpCircle, X
+  HelpCircle, X, Undo, Redo
 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
@@ -534,6 +534,24 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
               <button onClick={() => handleImageInsert()} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Imagem (![alt](url))"><ImageIcon className="w-4 h-4" /></button>
               <button onClick={() => insertMarkdownSnippet('\n| Coluna 1 | Coluna 2 |\n|----------|----------|\n| Dado 1   | Dado 2   |\n')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Tabela"><TableIcon className="w-4 h-4" /></button>
               
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button 
+                onClick={() => editor?.chain().focus().undo().run()} 
+                disabled={!editor?.can().undo()}
+                className={`p-1.5 rounded transition-colors ${editor?.can().undo() ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]' : 'text-[var(--text-muted)] cursor-not-allowed'}`}
+                title="Desfazer (Ctrl+Z)"
+              >
+                <Undo className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => editor?.chain().focus().redo().run()} 
+                disabled={!editor?.can().redo()}
+                className={`p-1.5 rounded transition-colors ${editor?.can().redo() ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]' : 'text-[var(--text-muted)] cursor-not-allowed'}`}
+                title="Refazer (Ctrl+Y)"
+              >
+                <Redo className="w-4 h-4" />
+              </button>
+
               <div className="flex-1" />
               <button 
                 onClick={() => setShowCheatsheet(true)} 

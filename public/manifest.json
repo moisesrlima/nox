@@ -1,0 +1,23 @@
+{
+  "name": "NoxNote - Editor de Notas Minimalista",
+  "short_name": "NoxNote",
+  "description": "Um editor de notas minimalista com suporte a Markdown, Visual e exportação de documentos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/noxnote/192/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://picsum.photos/seed/noxnote/512/512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

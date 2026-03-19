@@ -80,7 +80,7 @@ export function EditorTopBar({
             </button>
           </div>
 
-          {mode === 'visual' && onUndo && onRedo && (
+          {onUndo && onRedo && (
             <div className="hidden sm:flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)] mr-1">
               <button
                 onClick={onUndo}
