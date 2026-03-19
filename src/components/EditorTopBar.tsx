@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo, Image } from 'lucide-react';
+import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo, Image as ImageIcon } from 'lucide-react';
 import { Note } from '../types';
 
 interface EditorTopBarProps {
@@ -151,7 +151,7 @@ export function EditorTopBar({
                 <FileText className="w-4 h-4" /> PDF
               </button>
               <button onClick={onExportImage} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
-                <Image className="w-4 h-4" /> Imagem (PNG)
+                <ImageIcon className="w-4 h-4" /> Imagem (PNG)
               </button>
             </div>
           </div>

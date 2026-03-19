@@ -4,7 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { Note } from '../types';
 import { 
   Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
-  Bold, Italic, Underline, Link as LinkIcon, Search,
+  Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Search,
   Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon, Image as ImageIcon,
   HelpCircle, X, Undo, Redo
 } from 'lucide-react';
@@ -616,7 +616,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
               <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
               <button onClick={() => applyMarkdownStyle('**')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Negrito (**texto**)"><Bold className="w-4 h-4" /></button>
               <button onClick={() => applyMarkdownStyle('*')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Itálico (*texto*)"><Italic className="w-4 h-4" /></button>
-              <button onClick={() => applyMarkdownStyle('<u>', '</u>')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Sublinhado (<u>texto</u>)"><Underline className="w-4 h-4" /></button>
+              <button onClick={() => applyMarkdownStyle('<u>', '</u>')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Sublinhado (<u>texto</u>)"><UnderlineIcon className="w-4 h-4" /></button>
               <button onClick={() => applyMarkdownStyle('~~')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Tachado (~~texto~~)"><Strikethrough className="w-4 h-4" /></button>
               <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
               <button onClick={() => applyMarkdownStyle('[', '](url)')} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Link ([texto](url))"><LinkIcon className="w-4 h-4" /></button>
