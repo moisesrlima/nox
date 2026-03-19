@@ -177,7 +177,6 @@ export default function App() {
     <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
       {(isFirstVisit || showWelcomeModal) && (
         <WelcomeModal 
-          isFirstVisit={isFirstVisit}
           onAccept={() => {
             setIsFirstVisit(false);
             setShowWelcomeModal(false);

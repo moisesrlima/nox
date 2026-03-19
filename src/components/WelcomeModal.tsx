@@ -1,56 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Download, CheckCircle2 } from 'lucide-react';
+import React from 'react';
 
 interface WelcomeModalProps {
   onAccept: () => void;
-  isFirstVisit: boolean;
 }
 
-export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
-  const [hasConsented, setHasConsented] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
-
-  useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-      setIsInstalled(true);
-    }
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setIsInstallable(true);
-    };
-
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setIsInstallable(false);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setIsInstallable(false);
-    }
-    setDeferredPrompt(null);
-  };
-
+export function WelcomeModal({ onAccept }: WelcomeModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
@@ -99,49 +53,12 @@ export function WelcomeModal({ onAccept, isFirstVisit }: WelcomeModalProps) {
           </div>
         </div>
 
-        {isFirstVisit && (
-          <div className="flex items-start gap-3 p-4 bg-[var(--bg-primary)]/50 rounded-lg border border-[var(--border-color)]">
-            <input
-              type="checkbox"
-              id="consent"
-              checked={hasConsented}
-              onChange={(e) => setHasConsented(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-[var(--border-color)] bg-[var(--bg-surface)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)] focus:ring-offset-[var(--bg-surface)] cursor-pointer"
-            />
-            <label htmlFor="consent" className="text-sm text-[var(--text-secondary)] cursor-pointer select-none">
-              Eu entendo que minhas notas são salvas apenas neste navegador e serão perdidas se eu limpar os dados de navegação.
-            </label>
-          </div>
-        )}
-
         <div className="space-y-3">
-          <div className="flex justify-center pb-2">
-            {isInstalled ? (
-              <div className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-lg text-sm font-medium border border-emerald-500/20">
-                <CheckCircle2 className="w-4 h-4" />
-                App Instalado
-              </div>
-            ) : isInstallable ? (
-              <button
-                onClick={handleInstallClick}
-                className="flex items-center gap-2 text-[var(--accent-primary)] bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-[var(--accent-primary)]/20"
-              >
-                <Download className="w-4 h-4" />
-                Instalar App
-              </button>
-            ) : null}
-          </div>
-
           <button
             onClick={onAccept}
-            disabled={isFirstVisit && !hasConsented}
-            className={`w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--text-muted)] focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)] ${
-              isFirstVisit && !hasConsented
-                ? 'bg-[var(--bg-hover)] text-[var(--text-muted)] cursor-not-allowed'
-                : 'bg-[var(--accent-primary)] hover:opacity-90 text-[var(--accent-contrast)]'
-            }`}
+            className="w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--text-muted)] focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)] bg-[var(--accent-primary)] hover:opacity-90 text-[var(--accent-contrast)]"
           >
-            {isFirstVisit ? 'Começar a usar' : 'Fechar'}
+            Fechar
           </button>
           
           <a
