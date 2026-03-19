@@ -9,6 +9,7 @@ import {
   HelpCircle, X, Undo, Redo
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import html2pdf from 'html2pdf.js';
 
 // Tiptap imports
 import { useEditor, EditorContent } from '@tiptap/react';

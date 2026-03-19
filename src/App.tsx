@@ -119,6 +119,15 @@ export default function App() {
     setIsSidebarOpen(false);
   };
 
+  const handleRestore = (data: { notes: Note[], folders: Folder[] }) => {
+    if (data.notes && Array.isArray(data.notes)) {
+      setNotes(data.notes);
+    }
+    if (data.folders && Array.isArray(data.folders)) {
+      setFolders(data.folders);
+    }
+  };
+
   const handleCreateFolder = () => {
     const newFolder: Folder = {
       id: uuidv4(),
@@ -206,6 +215,7 @@ export default function App() {
         onDeleteFolder={handleDeleteFolder}
         onMoveNoteToFolder={handleMoveNoteToFolder}
         onBackup={handleBackup}
+        onRestore={handleRestore}
         onImport={handleImport}
         onImportTemplate={handleImportTemplate}
         onShowInfo={() => setShowWelcomeModal(true)}

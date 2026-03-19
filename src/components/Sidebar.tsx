@@ -5,6 +5,7 @@ import { Note, Folder } from '../types';
 import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText } from 'lucide-react';
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
+import { GoogleDriveSync } from './GoogleDriveSync';
 
 interface SidebarProps {
   notes: Note[];
@@ -18,6 +19,7 @@ interface SidebarProps {
   onDeleteFolder: (id: string) => void;
   onMoveNoteToFolder: (noteId: string, folderId?: string) => void;
   onBackup: () => void;
+  onRestore: (data: { notes: Note[], folders: Folder[] }) => void;
   onImport: (notes: Note[]) => void;
   onImportTemplate: (template: Note) => void;
   onShowInfo: () => void;
@@ -40,6 +42,7 @@ export function Sidebar({
   onDeleteFolder,
   onMoveNoteToFolder,
   onBackup,
+  onRestore,
   onImport,
   onImportTemplate,
   onShowInfo,
@@ -752,6 +755,10 @@ export function Sidebar({
               </div>
 
               <div className="border-t border-border/50"></div>
+
+              <GoogleDriveSync notes={notes} folders={folders} onRestore={onRestore} />
+
+              <div className="border-t border-border/50 mt-4"></div>
 
               <div>
                 <h4 className="px-3 pb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">Dados</h4>
