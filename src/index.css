@@ -77,6 +77,55 @@ body {
     @apply bg-[var(--bg-hover)]/30 text-[var(--text-primary)] transition-colors;
   }
   
+  /* Task Lists in Prose & Markdown Preview */
+  .prose ul.task-list,
+  .prose ul.contains-task-list,
+  .markdown-body ul.contains-task-list,
+  .ProseMirror ul.task-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 1rem 0 !important;
+  }
+  
+  .prose li.task-item,
+  .prose li.task-list-item,
+  .markdown-body li.task-list-item,
+  .ProseMirror li.task-item {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    margin: 0.5rem 0 !important;
+  }
+
+  .ProseMirror li.task-item > label {
+    flex: 0 0 auto;
+    user-select: none;
+    margin-top: 0.25rem;
+  }
+
+  .ProseMirror li.task-item > div {
+    flex: 1 1 auto;
+  }
+  
+  .prose li.task-item input[type="checkbox"],
+  .prose li.task-list-item input[type="checkbox"],
+  .markdown-body li.task-list-item input[type="checkbox"],
+  .ProseMirror li.task-item input[type="checkbox"] {
+    margin-top: 0.25rem !important;
+    accent-color: var(--accent-primary) !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    border: 2px solid var(--border-color) !important;
+    appearance: auto !important;
+  }
+
+  .ProseMirror li.task-item[data-checked="true"] > div {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+  
   /* Tiptap specific table styles */
   .ProseMirror {
     white-space: pre-wrap;
@@ -206,8 +255,26 @@ body {
     background-color: rgba(255, 255, 255, 0.02);
   }
 
-  .ProseMirror tr:hover td {
-    @apply bg-[var(--bg-hover)]/30 transition-colors;
+  .ProseMirror td ul[data-type="taskList"],
+  .ProseMirror th ul[data-type="taskList"] {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .ProseMirror td li.task-item,
+  .ProseMirror th li.task-item {
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .ProseMirror td li.task-item > label,
+  .ProseMirror th li.task-item > label {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
   }
   
   .ProseMirror .selectedCell:after {

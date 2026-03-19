@@ -21,6 +21,9 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import TiptapUnderline from '@tiptap/extension-underline';
+import Typography from '@tiptap/extension-typography';
+import TiptapLink from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import { Markdown } from 'tiptap-markdown';
 import { getSlashCommands, CommandItem } from './EditorCommands';
@@ -121,16 +124,44 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
   // Tiptap Editor
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        link: {
-          openOnClick: false,
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'task-list',
         },
       }),
-      TaskList,
       TaskItem.configure({
         nested: true,
+        HTMLAttributes: {
+          class: 'task-item',
+        },
       }),
-      Markdown,
+      TiptapUnderline,
+      TiptapLink.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-500 underline cursor-pointer',
+        },
+      }),
+      Typography,
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      Markdown.configure({
+        html: true,
+        tightLists: true,
+        bulletListMarker: '-',
+        linkify: true,
+        breaks: true,
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
       Image.configure({
         allowBase64: true,
         HTMLAttributes: {
@@ -376,10 +407,16 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
           tr:nth-child(even) { background-color: #fcfcfc; }
           tr:hover { background-color: #f9fafb; }
           hr { break-after: page; page-break-after: always; border: none; border-top: 1px solid #e5e7eb; margin: 2rem 0; }
+          .watermark { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; text-align: center; font-size: 0.75rem; color: #9ca3af; }
+          .watermark a { color: #3b82f6; text-decoration: none; font-weight: bold; }
         </style>
       </head>
       <body>
         ${editor?.getHTML() || '<h1>Erro ao gerar HTML</h1>'}
+        <div class="watermark">
+          <p><a href="https://nox-note.vercel.app/">Feito com NoxNote</a></p>
+          <p>qrcode feito com NoxNote</p>
+        </div>
       </body>
       </html>
     `;
@@ -399,6 +436,16 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     element.style.padding = '20px';
     element.style.color = '#000';
     element.style.fontFamily = 'system-ui, sans-serif';
+    
+    const watermark = document.createElement('div');
+    watermark.innerHTML = `
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+        <p><a href="https://nox-note.vercel.app/" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Feito com NoxNote</a></p>
+        <p>qrcode feito com NoxNote</p>
+      </div>
+    `;
+    element.appendChild(watermark);
+
     const style = document.createElement('style');
     style.innerHTML = `
       body { color: #000 !important; background: #fff !important; }
@@ -419,6 +466,56 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
     };
     html2pdf().set(opt).from(element).save();
+  };
+
+  const exportImage = () => {
+    if (!editor) return;
+    const element = document.createElement('div');
+    element.innerHTML = editor.getHTML();
+    element.style.padding = '40px';
+    element.style.width = '800px';
+    element.style.background = '#fff';
+    element.style.color = '#000';
+    element.style.fontFamily = 'system-ui, sans-serif';
+    
+    const watermark = document.createElement('div');
+    watermark.innerHTML = `
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 14px; color: #666;">
+        <p style="margin: 4px 0;">Baixei esse planner insano no <strong>Nox Note</strong></p>
+        <p style="margin: 4px 0;"><a href="https://nox-note.vercel.app/" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Feito com NoxNote</a></p>
+        <p style="margin: 4px 0; font-size: 10px; opacity: 0.5;">qrcode feito com NoxNote</p>
+      </div>
+    `;
+    element.appendChild(watermark);
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+      body { color: #000 !important; background: #fff !important; }
+      pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; }
+      code { font-family: monospace; }
+      blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+      table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      th { background-color: #f4f4f4; font-weight: bold; }
+      img { max-width: 100%; border-radius: 8px; }
+    `;
+    element.appendChild(style);
+
+    // Use html2pdf's internal html2canvas to get an image
+    const worker = html2pdf().from(element).set({
+      margin: 0,
+      filename: `${note.title || 'nota'}.png`,
+      image: { type: 'png', quality: 1 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'px', format: [800, element.scrollHeight + 100], orientation: 'portrait' }
+    });
+
+    worker.toImg().outputImg().then((img: HTMLImageElement) => {
+      const link = document.createElement('a');
+      link.href = img.src;
+      link.download = `${note.title || 'nota'}.png`;
+      link.click();
+    });
   };
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -469,6 +566,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
         onExportTxt={exportTxt}
         onExportHtml={exportHtml}
         onExportPdf={exportPdf}
+        onExportImage={exportImage}
         isReading={isReading}
         isGlobalPlaying={isGlobalPlaying}
         onToggleReading={() => {

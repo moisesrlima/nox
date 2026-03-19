@@ -148,6 +148,12 @@ export default function App() {
     );
   };
 
+  const handleImportTemplate = (template: Note) => {
+    setNotes((prev) => [template, ...prev]);
+    setActiveNoteId(template.id);
+    setIsSidebarOpen(false);
+  };
+
   const handleImport = (importedNotes: Note[]) => {
     setNotes(importedNotes);
     if (importedNotes.length > 0) {
@@ -201,6 +207,7 @@ export default function App() {
         onMoveNoteToFolder={handleMoveNoteToFolder}
         onBackup={handleBackup}
         onImport={handleImport}
+        onImportTemplate={handleImportTemplate}
         onShowInfo={() => setShowWelcomeModal(true)}
         onResetData={() => setShowResetModal(true)}
         onOpenThemes={() => setShowSettingsModal(true)}

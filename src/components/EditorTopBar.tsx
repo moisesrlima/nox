@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo } from 'lucide-react';
+import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo, Image } from 'lucide-react';
 import { Note } from '../types';
 
 interface EditorTopBarProps {
@@ -13,6 +13,7 @@ interface EditorTopBarProps {
   onExportTxt: () => void;
   onExportHtml: () => void;
   onExportPdf: () => void;
+  onExportImage: () => void;
   isReading?: boolean;
   isGlobalPlaying?: boolean;
   onToggleReading?: () => void;
@@ -32,6 +33,7 @@ export function EditorTopBar({
   onExportTxt,
   onExportHtml,
   onExportPdf,
+  onExportImage,
   isReading = false,
   isGlobalPlaying = false,
   onToggleReading,
@@ -147,6 +149,9 @@ export function EditorTopBar({
               </button>
               <button onClick={onExportPdf} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
                 <FileText className="w-4 h-4" /> PDF
+              </button>
+              <button onClick={onExportImage} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
+                <Image className="w-4 h-4" /> Imagem (PNG)
               </button>
             </div>
           </div>

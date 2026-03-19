@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note, Folder } from '../types';
-import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus } from 'lucide-react';
+import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles } from 'lucide-react';
+import { TEMPLATES, createNoteFromTemplate } from '../templates';
+import { TemplatePreviewModal } from './TemplatePreviewModal';
 
 interface SidebarProps {
   notes: Note[];
@@ -17,6 +19,7 @@ interface SidebarProps {
   onMoveNoteToFolder: (noteId: string, folderId?: string) => void;
   onBackup: () => void;
   onImport: (notes: Note[]) => void;
+  onImportTemplate: (template: Note) => void;
   onShowInfo: () => void;
   onResetData: () => void;
   onOpenThemes: () => void;
@@ -38,6 +41,7 @@ export function Sidebar({
   onMoveNoteToFolder,
   onBackup,
   onImport,
+  onImportTemplate,
   onShowInfo,
   onResetData,
   onOpenThemes,
@@ -48,6 +52,9 @@ export function Sidebar({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRadioOpen, setIsRadioOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<{ title: string; description: string; content: string } | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStation, setCurrentStation] = useState(0);
   const [volume, setVolume] = useState(0.5);
@@ -319,11 +326,7 @@ export function Sidebar({
       >
         <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
           <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
-            <span
-              className="w-6 h-6 rounded-md flex items-center justify-center text-sm font-black bg-[var(--accent-primary)] text-[var(--accent-contrast)]"
-            >
-              N
-            </span>
+            <img src="/icon.svg" alt="NoxNote Logo" className="w-6 h-6 rounded-md" />
             NoxNote
           </h1>
           <div className="flex items-center gap-1">
@@ -519,6 +522,45 @@ export function Sidebar({
         </div>
 
         <div className="p-4 border-t border-border space-y-3">
+          {/* Galeria de Templates */}
+          <div>
+            <button
+              onClick={() => setIsTemplatesOpen(!isTemplatesOpen)}
+              className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
+                isTemplatesOpen 
+                  ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)] font-medium' 
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Galeria de Templates
+              </div>
+              <ChevronUp
+                className={`w-4 h-4 transition-transform ${
+                  isTemplatesOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            {isTemplatesOpen && (
+              <div className="mt-2 space-y-2 p-2 bg-[var(--bg-surface)]/50 rounded-lg border border-[var(--border-color)]/50">
+                {TEMPLATES.map(template => (
+                  <button
+                    key={template.id}
+                    onClick={() => {
+                      setPreviewTemplate(template);
+                      setIsPreviewOpen(true);
+                    }}
+                    className="w-full text-left p-2 rounded-md hover:bg-[var(--bg-hover)] transition-all group"
+                  >
+                    <div className="text-xs font-bold text-[var(--text-primary)] mb-0.5">{template.title}</div>
+                    <div className="text-[10px] text-[var(--text-muted)] line-clamp-1">{template.description}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Pomodoro Timer */}
           <div>
             <button
@@ -762,6 +804,20 @@ export function Sidebar({
         />
       )}
       <audio ref={audioRef} />
+
+      <TemplatePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        onConfirm={() => {
+          if (previewTemplate) {
+            const templateId = TEMPLATES.find(t => t.title === previewTemplate.title)?.id;
+            if (templateId) {
+              onImportTemplate(createNoteFromTemplate(templateId));
+            }
+          }
+        }}
+        template={previewTemplate}
+      />
     </>
   );
 }
