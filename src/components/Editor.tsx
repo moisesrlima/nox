@@ -8,7 +8,7 @@ import {
   Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon, Image as ImageIcon,
   HelpCircle, X, Undo, Redo
 } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
+import { toPng } from 'html-to-image';
 
 // Tiptap imports
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -472,18 +472,31 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     if (!editor) return;
     const element = document.createElement('div');
     element.innerHTML = editor.getHTML();
-    element.style.padding = '40px';
-    element.style.width = '800px';
+    element.style.padding = '60px';
+    element.style.width = '1080px';
+    element.style.minHeight = '1350px';
     element.style.background = '#fff';
     element.style.color = '#000';
     element.style.fontFamily = 'system-ui, sans-serif';
+    element.style.boxSizing = 'border-box';
+    element.style.display = 'flex';
+    element.style.flexDirection = 'column';
+    
+    const contentWrapper = document.createElement('div');
+    contentWrapper.style.flex = '1';
+    
+    // Move all children to contentWrapper
+    while (element.firstChild) {
+      contentWrapper.appendChild(element.firstChild);
+    }
+    element.appendChild(contentWrapper);
     
     const watermark = document.createElement('div');
     watermark.innerHTML = `
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 14px; color: #666;">
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 16px; color: #666;">
         <p style="margin: 4px 0;">Baixei esse planner insano no <strong>Nox Note</strong></p>
         <p style="margin: 4px 0;"><a href="https://nox-note.vercel.app/" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Feito com NoxNote</a></p>
-        <p style="margin: 4px 0; font-size: 10px; opacity: 0.5;">qrcode feito com NoxNote</p>
+        <p style="margin: 4px 0; font-size: 12px; opacity: 0.5;">qrcode feito com NoxNote</p>
       </div>
     `;
     element.appendChild(watermark);
@@ -491,30 +504,46 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     const style = document.createElement('style');
     style.innerHTML = `
       body { color: #000 !important; background: #fff !important; }
-      pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; }
+      pre { background: #f4f4f4; padding: 1.5rem; border-radius: 8px; font-size: 14px; }
       code { font-family: monospace; }
-      blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
-      table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-      th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+      blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; font-size: 18px; }
+      table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 16px; }
+      th, td { border: 1px solid #ddd; padding: 16px; text-align: left; }
       th { background-color: #f4f4f4; font-weight: bold; }
       img { max-width: 100%; border-radius: 8px; }
+      h1 { font-size: 36px; margin-bottom: 24px; }
+      h2 { font-size: 30px; margin-top: 32px; margin-bottom: 16px; }
+      h3 { font-size: 24px; margin-top: 24px; margin-bottom: 16px; }
+      p, li { font-size: 18px; line-height: 1.6; }
+      ul.task-list { list-style: none; padding: 0; }
+      li.task-item { display: flex; align-items: flex-start; gap: 12px; margin: 8px 0; }
+      li.task-item input { margin-top: 6px; width: 18px; height: 18px; }
     `;
     element.appendChild(style);
 
-    // Use html2pdf's internal html2canvas to get an image
-    const worker = html2pdf().from(element).set({
-      margin: 0,
-      filename: `${note.title || 'nota'}.png`,
-      image: { type: 'png', quality: 1 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'px', format: [800, element.scrollHeight + 100], orientation: 'portrait' }
-    });
+    // Temporarily append to body to get correct dimensions for html-to-image
+    element.style.position = 'absolute';
+    element.style.left = '-9999px';
+    element.style.top = '-9999px';
+    document.body.appendChild(element);
 
-    worker.toImg().outputImg().then((img: HTMLImageElement) => {
+    // Use html-to-image to get a PNG
+    toPng(element, {
+      quality: 1,
+      pixelRatio: 2,
+      width: 1080,
+      height: Math.max(1350, element.scrollHeight)
+    }).then((dataUrl) => {
+      document.body.removeChild(element);
       const link = document.createElement('a');
-      link.href = img.src;
+      link.href = dataUrl;
       link.download = `${note.title || 'nota'}.png`;
       link.click();
+    }).catch((err) => {
+      console.error('Error exporting image:', err);
+      if (document.body.contains(element)) {
+        document.body.removeChild(element);
+      }
     });
   };
 
