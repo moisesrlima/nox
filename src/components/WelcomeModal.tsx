@@ -23,8 +23,20 @@ export function WelcomeModal({ onAccept }: WelcomeModalProps) {
               </svg>
             </div>
             <div>
-              <strong className="text-[var(--text-primary)] block">100% Local e Seguro</strong>
-              Seus dados nunca saem do seu dispositivo. Não há servidores, contas ou senhas.
+              <strong className="text-[var(--text-primary)] block">Local-First e Seguro</strong>
+              Suas notas são salvas no seu dispositivo para acesso instantâneo. Você tem controle total sobre seus dados.
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+              </svg>
+            </div>
+            <div>
+              <strong className="text-[var(--text-primary)] block">Sincronização na Nuvem</strong>
+              Faça login com sua conta Google para sincronizar suas notas no Google Drive de forma segura e acessá-las em qualquer dispositivo.
             </div>
           </div>
 
@@ -35,20 +47,8 @@ export function WelcomeModal({ onAccept }: WelcomeModalProps) {
               </svg>
             </div>
             <div>
-              <strong className="text-[var(--text-primary)] block">Armazenamento Limitado</strong>
-              Usamos o <code className="bg-[var(--bg-hover)] px-1 py-0.5 rounded text-xs">localStorage</code> do seu navegador, que tem um limite de cerca de 5MB.
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="flex-shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </div>
-            <div>
-              <strong className="text-[var(--text-primary)] block">Risco de Perda de Dados</strong>
-              Se você limpar o cache ou os dados do seu navegador, <strong>suas notas serão apagadas permanentemente</strong>. Use a função de backup com frequência.
+              <strong className="text-[var(--text-primary)] block">Backup Recomendado</strong>
+              Sem a sincronização, usamos o armazenamento do navegador (sujeito a perda de dados se o cache for limpo). Recomendamos ativar o Google Drive ou exportar backups manualmente.
             </div>
           </div>
         </div>

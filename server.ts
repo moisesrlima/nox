@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import { google } from 'googleapis';
 import cookieParser from 'cookie-parser';
 import path from 'path';
@@ -38,7 +37,7 @@ app.get('/api/auth/url', (req, res) => {
 });
 
 // 2. Auth Callback
-app.get('/auth/callback', async (req, res) => {
+app.get(['/auth/callback', '/api/auth/callback'], async (req, res) => {
   const { code } = req.query;
   if (!code || typeof code !== 'string') {
     return res.status(400).send('Missing code');
@@ -236,6 +235,7 @@ app.get('/api/drive/sync', async (req, res) => {
 // Vite middleware setup
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -254,4 +254,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

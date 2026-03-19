@@ -22,9 +22,7 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import TiptapUnderline from '@tiptap/extension-underline';
 import Typography from '@tiptap/extension-typography';
-import TiptapLink from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import { Markdown } from 'tiptap-markdown';
 import { getSlashCommands, CommandItem } from './EditorCommands';
@@ -137,13 +135,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
           class: 'task-item',
         },
       }),
-      TiptapUnderline,
-      TiptapLink.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-500 underline cursor-pointer',
-        },
-      }),
       Typography,
       StarterKit.configure({
         bulletList: {
@@ -154,6 +145,13 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
           keepMarks: true,
           keepAttributes: false,
         },
+        link: {
+          openOnClick: false,
+          HTMLAttributes: {
+            class: 'text-blue-500 underline cursor-pointer',
+          },
+        },
+        underline: {},
       }),
       Markdown.configure({
         html: true,

@@ -116,8 +116,8 @@ export const INITIAL_NOTE: Note = {
 
 O **Nox Note** é um bloco de notas **minimalista**, criado para quem valoriza **foco, simplicidade e privacidade**.
 
-> 🛡️ **Local-first:** suas notas ficam no seu navegador.
-> Nenhum dado sai do seu dispositivo.
+> 🛡️ **Local-first:** Suas notas ficam no seu navegador para acesso rápido.
+> ☁️ **Sincronização em Nuvem:** Conecte sua conta Google para salvar tudo no Google Drive!
 
 ---
 
@@ -144,13 +144,22 @@ O Nox Note também ajuda você a **entrar no fluxo de trabalho**:
 
 ---
 
+## ☁️ Sincronização e Nuvem
+
+Agora você não precisa mais se preocupar em perder suas notas se limpar o cache do navegador:
+
+- Faça login com o **Google Drive** no menu inferior esquerdo.
+- Suas notas serão sincronizadas automaticamente na nuvem.
+- Acesse de qualquer dispositivo com segurança!
+
+---
+
 ## ✅ Exemplo de Checklist
 
 - [ ] Escrever ideias
-- [ ] Revisar anotações
+- [ ] Conectar conta do Google Drive
 - [ ] Ouvir Lo-Fi
-- [ ] Entrar em modo foco
-- [ ] Exportar nota
+- [ ] Exportar nota em PDF
 
 ---
 
@@ -166,17 +175,11 @@ Você pode exportar suas anotações facilmente:
 
 ---
 
-## 🖼️ Exemplo de Imagem
-
-![Exemplo de Imagem](https://picsum.photos/600/200)
-
----
-
 ## 🚀 Simples assim
 
 1. Capture ideias rapidamente
 2. Organize com Markdown
-3. Entre em modo foco
+3. Sincronize com a nuvem
 4. Exporte quando precisar
 
 ---
