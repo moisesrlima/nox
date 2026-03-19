@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note, Folder } from '../types';
-import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles } from 'lucide-react';
+import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText } from 'lucide-react';
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
 
@@ -771,6 +771,30 @@ export function Sidebar({
                     Exportar Backup
                   </button>
                 </div>
+              </div>
+
+              <div className="border-t border-border/50"></div>
+
+              <div>
+                <h4 className="px-3 pb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">Sobre</h4>
+                <a
+                  href="/privacy-policy.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  Política de Privacidade
+                </a>
+                <a
+                  href="/terms-of-service.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  Termos de Serviço
+                </a>
               </div>
 
               <div className="border-t border-border/50"></div>
