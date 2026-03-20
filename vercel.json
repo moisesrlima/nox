@@ -1,13 +1,11 @@
 {
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/auth/(.*)",
-      "destination": "/api/auth/$1"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
