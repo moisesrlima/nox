@@ -21,6 +21,15 @@ export function Footer() {
         >
           Termos de Serviço
         </a>
+        <span>•</span>
+        <a
+          href="/google9ca2185b737e34d3.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-[var(--text-secondary)] transition-colors"
+        >
+          Verificação Google
+        </a>
       </div>
     </footer>
   );

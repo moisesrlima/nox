@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Sidebar } from './components/Sidebar';
-import { Editor } from './components/Editor';
+// import { Editor } from './components/Editor';
 import { WelcomeModal } from './components/WelcomeModal';
 import { ResetModal } from './components/ResetModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Footer } from './components/Footer';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Note, Folder, INITIAL_NOTE, THEMES, ThemeId } from './types';
+
+const Editor = lazy(() => import('./components/Editor').then(module => ({ default: module.Editor })));
 
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
@@ -227,12 +229,14 @@ export default function App() {
           currentThemeId={currentThemeId}
         />
 
-        <Editor
-          note={activeNote}
-          onUpdateNote={handleUpdateNote}
-          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-          currentThemeId={currentThemeId}
-        />
+        <Suspense fallback={<div>Carregando editor...</div>}>
+          <Editor
+            note={activeNote}
+            onUpdateNote={handleUpdateNote}
+            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            currentThemeId={currentThemeId}
+          />
+        </Suspense>
       </div>
 
       <Footer />
