@@ -78,6 +78,13 @@ export function Sidebar({
   const [editingFolderName, setEditingFolderName] = useState('');
   const [isFoldersOpen, setIsFoldersOpen] = useState(true);
 
+  const toggleAccordion = (section: 'templates' | 'pomodoro' | 'radio' | 'settings') => {
+    setIsTemplatesOpen(section === 'templates' ? !isTemplatesOpen : false);
+    setIsPomodoroOpen(section === 'pomodoro' ? !isPomodoroOpen : false);
+    setIsRadioOpen(section === 'radio' ? !isRadioOpen : false);
+    setIsSettingsOpen(section === 'settings' ? !isSettingsOpen : false);
+  };
+
   const toggleFolder = (id: string) => {
     setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
   };
@@ -283,7 +290,7 @@ export function Sidebar({
         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) {
           onImport(parsed);
         } else {
-          console.error('Formato de backup inválido.');
+          console.error('Formato de backup invÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡lido.');
         }
       } catch (error) {
         console.error('Falha ao ler o arquivo de backup', error);
@@ -295,8 +302,8 @@ export function Sidebar({
 
   const handleShare = async () => {
     const shareData = {
-      title: 'Conheça o Nox Note',
-      text: 'Experimente o Nox Note, um bloco de notas rápido, seguro e 100% privado que funciona no seu navegador!',
+      title: 'ConheÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§a o Nox Note',
+      text: 'Experimente o Nox Note, um bloco de notas rÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡pido, seguro e 100% privado que funciona no seu navegador!',
       url: window.location.href,
     };
     try {
@@ -304,7 +311,7 @@ export function Sidebar({
         await navigator.share(shareData);
       } else {
         await navigator.clipboard.writeText(shareData.url);
-        alert('Link copiado para a área de transferência! Compartilhe com seus amigos.');
+        alert('Link copiado para a ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡rea de transferÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªncia! Compartilhe com seus amigos.');
       }
     } catch (error) {
       console.error('Falha ao compartilhar', error);
@@ -336,7 +343,7 @@ export function Sidebar({
             <button
               onClick={onShowInfo}
               className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
-              title="Informações de Segurança"
+              title="InformaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes de SeguranÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§a"
             >
               <Info className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
             </button>
@@ -420,7 +427,7 @@ export function Sidebar({
                         <button 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            if (confirm(`Excluir pasta "${folder.name}"? As notas serão movidas para fora.`)) {
+                            if (confirm(`Excluir pasta "${folder.name}"? As notas serÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o movidas para fora.`)) {
                               onDeleteFolder(folder.id);
                             }
                           }}
@@ -451,7 +458,7 @@ export function Sidebar({
                                     : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/50 hover:text-[var(--text-primary)]'
                                 }`}
                               >
-                                <span className="text-xs truncate flex-1">{note.title || 'Sem título'}</span>
+                                <span className="text-xs truncate flex-1">{note.title || 'Sem tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo'}</span>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -500,7 +507,7 @@ export function Sidebar({
                   >
                     <div className="flex-1 min-w-0 pr-2">
                       <h3 className="text-sm font-medium truncate">
-                        {note.title || 'Sem título'}
+                        {note.title || 'Sem tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo'}
                       </h3>
                       <p className="text-xs text-[var(--text-muted)] truncate mt-1">
                         {format(note.updatedAt, "d 'de' MMM, yyyy", { locale: ptBR })}
@@ -528,7 +535,7 @@ export function Sidebar({
           {/* Galeria de Templates */}
           <div>
             <button
-              onClick={() => setIsTemplatesOpen(!isTemplatesOpen)}
+              onClick={() => toggleAccordion('templates')}
               className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
                 isTemplatesOpen 
                   ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)] font-medium' 
@@ -567,7 +574,7 @@ export function Sidebar({
           {/* Pomodoro Timer */}
           <div>
             <button
-              onClick={() => setIsPomodoroOpen(!isPomodoroOpen)}
+              onClick={() => toggleAccordion('pomodoro')}
               className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
                 isPomodoroOpen 
                   ? 'bg-accent text-accent-contrast font-medium' 
@@ -591,7 +598,7 @@ export function Sidebar({
                     {formatTime(pomodoroTime)}
                   </div>
                   <div className="text-xs text-text-secondary mt-1">
-                    {isBreak ? 'Pausa' : 'Foco'} • Sessões: {sessions}
+                    {isBreak ? 'Pausa' : 'Foco'} ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ SessÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes: {sessions}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -653,7 +660,7 @@ export function Sidebar({
           {/* Radio Player */}
           <div>
             <button
-              onClick={() => setIsRadioOpen(!isRadioOpen)}
+              onClick={() => toggleAccordion('radio')}
               className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
                 isRadioOpen 
                   ? 'bg-accent text-accent-contrast font-medium' 
@@ -662,7 +669,7 @@ export function Sidebar({
             >
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4" />
-                Rádio Lo-Fi
+                RÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡dio Lo-Fi
               </div>
               <ChevronUp
                 className={`w-4 h-4 transition-transform ${
@@ -713,7 +720,7 @@ export function Sidebar({
             )}
           </div>
           <button
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            onClick={() => toggleAccordion('settings')}
             className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
               isSettingsOpen 
                 ? 'bg-accent text-accent-contrast font-medium' 
@@ -722,7 +729,7 @@ export function Sidebar({
           >
             <div className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              Configurações
+              ConfiguraÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes
             </div>
             <ChevronUp
               className={`w-4 h-4 transition-transform ${
@@ -791,7 +798,7 @@ export function Sidebar({
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
                 >
                   <FileText className="w-4 h-4" />
-                  Política de Privacidade
+                  PolÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tica de Privacidade
                 </a>
                 <a
                   href="/terms-of-service.html"
@@ -800,7 +807,7 @@ export function Sidebar({
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
                 >
                   <FileText className="w-4 h-4" />
-                  Termos de Serviço
+                  Termos de ServiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§o
                 </a>
               </div>
 
