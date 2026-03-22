@@ -1,15 +1,12 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Sidebar } from './components/Sidebar';
-// import { Editor } from './components/Editor';
+import { Editor } from './components/Editor';
 import { WelcomeModal } from './components/WelcomeModal';
 import { ResetModal } from './components/ResetModal';
 import { SettingsModal } from './components/SettingsModal';
-import { Footer } from './components/Footer';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Note, Folder, INITIAL_NOTE, THEMES, ThemeId } from './types';
-
-const Editor = lazy(() => import('./components/Editor').then(module => ({ default: module.Editor })));
 
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
@@ -177,18 +174,18 @@ export default function App() {
   const activeNote = notes.find((n) => n.id === activeNoteId) || null;
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
+    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
       {(isFirstVisit || showWelcomeModal) && (
-        <WelcomeModal
+        <WelcomeModal 
           onAccept={() => {
             setIsFirstVisit(false);
             setShowWelcomeModal(false);
-          }}
+          }} 
         />
       )}
 
       {showResetModal && (
-        <ResetModal
+        <ResetModal 
           onConfirm={handleResetData}
           onCancel={() => setShowResetModal(false)}
         />
@@ -201,45 +198,39 @@ export default function App() {
           onClose={() => setShowSettingsModal(false)}
         />
       )}
-
-      <div className="flex flex-1 overflow-hidden pb-12">
-        <Sidebar
-          notes={notes}
-          folders={folders}
-          activeNoteId={activeNoteId}
-          onSelectNote={(id) => {
-            setActiveNoteId(id);
-            setIsSidebarOpen(false);
-          }}
-          onCreateNote={handleCreateNote}
-          onDeleteNote={handleDeleteNote}
-          onCreateFolder={handleCreateFolder}
-          onUpdateFolder={handleUpdateFolder}
-          onDeleteFolder={handleDeleteFolder}
-          onMoveNoteToFolder={handleMoveNoteToFolder}
-          onBackup={handleBackup}
-          onRestore={handleRestore}
-          onImport={handleImport}
-          onImportTemplate={handleImportTemplate}
-          onShowInfo={() => setShowWelcomeModal(true)}
-          onResetData={() => setShowResetModal(true)}
-          onOpenThemes={() => setShowSettingsModal(true)}
-          isOpen={isSidebarOpen}
-          setIsOpen={setIsSidebarOpen}
-          currentThemeId={currentThemeId}
-        />
-
-        <Suspense fallback={<div>Carregando editor...</div>}>
-          <Editor
-            note={activeNote}
-            onUpdateNote={handleUpdateNote}
-            onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-            currentThemeId={currentThemeId}
-          />
-        </Suspense>
-      </div>
-
-      <Footer />
+      
+      <Sidebar
+        notes={notes}
+        folders={folders}
+        activeNoteId={activeNoteId}
+        onSelectNote={(id) => {
+          setActiveNoteId(id);
+          setIsSidebarOpen(false);
+        }}
+        onCreateNote={handleCreateNote}
+        onDeleteNote={handleDeleteNote}
+        onCreateFolder={handleCreateFolder}
+        onUpdateFolder={handleUpdateFolder}
+        onDeleteFolder={handleDeleteFolder}
+        onMoveNoteToFolder={handleMoveNoteToFolder}
+        onBackup={handleBackup}
+        onRestore={handleRestore}
+        onImport={handleImport}
+        onImportTemplate={handleImportTemplate}
+        onShowInfo={() => setShowWelcomeModal(true)}
+        onResetData={() => setShowResetModal(true)}
+        onOpenThemes={() => setShowSettingsModal(true)}
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+        currentThemeId={currentThemeId}
+      />
+      
+      <Editor
+        note={activeNote}
+        onUpdateNote={handleUpdateNote}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        currentThemeId={currentThemeId}
+      />
     </div>
   );
 }

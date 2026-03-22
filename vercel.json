@@ -1,13 +1,15 @@
 {
-  "functions": {
-    "api/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
+      "destination": "/api/[...slug]"
+    },
+    {
+      "source": "/auth/(.*)",
+      "destination": "/api/[...slug]"
+    },
+    {
+      "source": "/((?!api|auth|manifest.json|icon.svg|sw.js|google9ca2185b737e34d3.html|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]

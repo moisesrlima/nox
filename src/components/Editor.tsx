@@ -151,6 +151,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
             class: 'text-blue-500 underline cursor-pointer',
           },
         },
+        underline: {},
       }),
       Markdown.configure({
         html: true,
