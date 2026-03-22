@@ -10,22 +10,51 @@ const PORT = 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
-// Test route
+// Diagnostic route
 app.get('/api/test', (req, res) => {
-  res.json({ status: 'ok', env: { hasClientId: !!process.env.GOOGLE_CLIENT_ID, hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET } });
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const host = req.headers.host || req.get('host');
+  
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    env: { 
+      hasClientId: !!(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID), 
+      hasClientSecret: !!(process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET),
+      clientIdValue: (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID) ? `${(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID)!.substring(0, 10)}...` : 'MISSING',
+      nodeEnv: process.env.NODE_ENV,
+      isVercel: !!process.env.VERCEL,
+      vercelEnv: process.env.VERCEL_ENV
+    },
+    request: {
+      protocol,
+      host,
+      url: req.url,
+      method: req.method,
+      headers: {
+        'x-forwarded-proto': req.headers['x-forwarded-proto'],
+        'host': req.headers['host'],
+        'x-vercel-id': req.headers['x-vercel-id']
+      }
+    }
+  });
+});
+
+app.get('/api/ping', (req, res) => {
+  res.json({ message: 'pong', time: new Date().toISOString() });
 });
 
 // OAuth2 Client setup
 const getOAuth2Client = (req: express.Request) => {
   const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-  const host = req.get('host') || req.headers.host;
+  const host = req.headers.host || req.get('host');
   const redirectUri = `${protocol}://${host}/auth/callback`;
   
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    console.error('Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET');
+    throw new Error('Configuração incompleta: GOOGLE_CLIENT_ID ou GOOGLE_CLIENT_SECRET não definidos no ambiente da Vercel. Verifique se as variáveis de ambiente estão configuradas corretamente no painel da Vercel.');
   }
 
   return new google.auth.OAuth2(
@@ -37,17 +66,25 @@ const getOAuth2Client = (req: express.Request) => {
 
 // 1. Get Auth URL
 app.get('/api/auth/url', (req, res) => {
-  const oauth2Client = getOAuth2Client(req);
-  const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    prompt: 'consent', // Force to get refresh token
-    scope: [
-      'https://www.googleapis.com/auth/drive.file', // Only files created by the app
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email'
-    ],
-  });
-  res.json({ url });
+  try {
+    const oauth2Client = getOAuth2Client(req);
+    const url = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      prompt: 'consent', // Force to get refresh token
+      scope: [
+        'https://www.googleapis.com/auth/drive.file', // Only files created by the app
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email'
+      ],
+    });
+    res.json({ url });
+  } catch (error) {
+    console.error('Error generating auth URL:', error);
+    res.status(500).json({ 
+      error: 'Falha ao gerar URL de autenticação', 
+      details: error instanceof Error ? error.message : String(error) 
+    });
+  }
 });
 
 // 2. Auth Callback
@@ -271,5 +308,15 @@ async function startServer() {
 if (!process.env.VERCEL) {
   startServer();
 }
+
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Global Error:', err);
+  res.status(err.status || 500).json({
+    error: 'Internal Server Error',
+    message: err.message || 'Ocorreu um erro inesperado no servidor.',
+    path: req.path
+  });
+});
 
 export default app;

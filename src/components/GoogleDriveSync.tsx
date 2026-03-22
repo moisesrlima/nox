@@ -42,6 +42,11 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   const checkAuthStatus = async () => {
     try {
       const res = await fetch('/api/auth/status');
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Auth status error response:', text);
+        return;
+      }
       const data = await res.json();
       setIsAuthenticated(data.authenticated);
       if (data.user) {
@@ -57,6 +62,11 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   const handleConnect = async () => {
     try {
       const res = await fetch('/api/auth/url');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Erro desconhecido no servidor' }));
+        throw new Error(data.error || data.message || 'Erro ao obter URL de autenticação');
+      }
+      
       const { url } = await res.json();
       
       const authWindow = window.open(
@@ -70,7 +80,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       }
     } catch (error) {
       console.error('Error getting auth URL:', error);
-      showAlert('Erro', 'Erro ao conectar com o Google Drive.');
+      showAlert('Erro', error instanceof Error ? error.message : 'Erro ao conectar com o Google Drive.');
     }
   };
 
