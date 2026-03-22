@@ -10,13 +10,27 @@ const PORT = 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ status: 'ok', env: { hasClientId: !!process.env.GOOGLE_CLIENT_ID, hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET } });
+});
+
 // OAuth2 Client setup
 const getOAuth2Client = (req: express.Request) => {
   const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-  const redirectUri = `${protocol}://${req.get('host')}/auth/callback`;
+  const host = req.get('host') || req.headers.host;
+  const redirectUri = `${protocol}://${host}/auth/callback`;
+  
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    console.error('Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET');
+  }
+
   return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
+    clientId,
+    clientSecret,
     redirectUri
   );
 };
@@ -72,7 +86,7 @@ app.get(['/auth/callback', '/api/auth/callback'], async (req, res) => {
     `);
   } catch (error) {
     console.error('Error exchanging code:', error);
-    res.status(500).send('Authentication failed');
+    res.status(500).json({ error: 'Authentication failed', details: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -101,7 +115,7 @@ app.get('/api/auth/status', async (req, res) => {
     });
   } catch (error) {
     console.error('Error checking auth status:', error);
-    res.json({ authenticated: false });
+    res.json({ authenticated: false, error: error instanceof Error ? error.message : String(error) });
   }
 });
 
