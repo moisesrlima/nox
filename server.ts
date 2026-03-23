@@ -4,6 +4,28 @@ import { google } from 'googleapis';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
+console.log('Server starting... Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  VERCEL: process.env.VERCEL,
+  VERCEL_ENV: process.env.VERCEL_ENV,
+  hasClientId: !!(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID),
+  hasRedirectUri: !!process.env.GOOGLE_REDIRECT_URI
+});
+
+// Centralized Config
+const googleConfig = {
+  get clientId() { return process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID; },
+  get clientSecret() { return process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET; },
+  get redirectUri() { return process.env.GOOGLE_REDIRECT_URI; }
+};
+
+// Validation function
+function validateEnv() {
+  const { clientId, clientSecret } = googleConfig;
+  if (!clientId) throw new Error("GOOGLE_CLIENT_ID não definido no ambiente.");
+  if (!clientSecret) throw new Error("GOOGLE_CLIENT_SECRET não definido no ambiente.");
+}
+
 const app = express();
 const PORT = 3000;
 
@@ -17,11 +39,14 @@ app.get('/api/test', (req, res) => {
   
   res.json({ 
     status: 'ok', 
+    version: '1.0.3',
     timestamp: new Date().toISOString(),
     env: { 
-      hasClientId: !!(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID), 
-      hasClientSecret: !!(process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET),
-      clientIdValue: (process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID) ? `${(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID)!.substring(0, 10)}...` : 'MISSING',
+      hasClientId: !!googleConfig.clientId, 
+      hasClientSecret: !!googleConfig.clientSecret,
+      hasRedirectUri: !!googleConfig.redirectUri,
+      clientIdValue: googleConfig.clientId ? `${googleConfig.clientId.substring(0, 10)}...` : 'MISSING',
+      redirectUriValue: googleConfig.redirectUri || 'DYNAMIC',
       nodeEnv: process.env.NODE_ENV,
       isVercel: !!process.env.VERCEL,
       vercelEnv: process.env.VERCEL_ENV
@@ -46,20 +71,19 @@ app.get('/api/ping', (req, res) => {
 
 // OAuth2 Client setup
 const getOAuth2Client = (req: express.Request) => {
+  validateEnv();
+
   const protocol = req.headers['x-forwarded-proto'] || req.protocol;
   const host = req.headers.host || req.get('host');
-  const redirectUri = `${protocol}://${host}/auth/callback`;
   
-  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.VITE_GOOGLE_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    throw new Error('Configuração incompleta: GOOGLE_CLIENT_ID ou GOOGLE_CLIENT_SECRET não definidos no ambiente da Vercel. Verifique se as variáveis de ambiente estão configuradas corretamente no painel da Vercel.');
-  }
+  // Use explicit redirect URI if provided, otherwise fallback to dynamic
+  const redirectUri = googleConfig.redirectUri || `${protocol}://${host}/auth/callback`;
+  
+  console.log('Creating OAuth2 client with redirectUri:', redirectUri);
 
   return new google.auth.OAuth2(
-    clientId,
-    clientSecret,
+    googleConfig.clientId,
+    googleConfig.clientSecret,
     redirectUri
   );
 };

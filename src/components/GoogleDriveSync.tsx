@@ -44,10 +44,18 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       const res = await fetch('/api/auth/status');
       if (!res.ok) {
         const text = await res.text();
-        console.error('Auth status error response:', text);
+        console.error('Auth status error response (text):', text);
         return;
       }
-      const data = await res.json();
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        console.error('Failed to parse auth status JSON:', jsonError);
+        return;
+      }
+
       setIsAuthenticated(data.authenticated);
       if (data.user) {
         setUser(data.user);
@@ -63,11 +71,26 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
     try {
       const res = await fetch('/api/auth/url');
       if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: 'Erro desconhecido no servidor' }));
-        throw new Error(data.error || data.message || 'Erro ao obter URL de autenticação');
+        let errorMsg = 'Erro ao obter URL de autenticação';
+        try {
+          const data = await res.json();
+          errorMsg = data.error || data.message || errorMsg;
+        } catch (e) {
+          const text = await res.text();
+          console.error('Error response body (text):', text);
+        }
+        throw new Error(errorMsg);
       }
       
-      const { url } = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        console.error('Failed to parse auth URL JSON:', jsonError);
+        throw new Error('Resposta do servidor inválida (não é JSON)');
+      }
+      
+      const { url } = data;
       
       const authWindow = window.open(
         url,

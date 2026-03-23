@@ -838,6 +838,8 @@ export function Sidebar({
             <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Termos de Serviço</a>
             <span>•</span>
             <a href="/google9ca2185b737e34d3.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Verificação Google</a>
+            <span>•</span>
+            <span className="opacity-50">v1.0.3</span>
           </div>
         </div>
       </div>
