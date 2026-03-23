@@ -39,7 +39,7 @@ app.get('/api/test', (req, res) => {
   
   res.json({ 
     status: 'ok', 
-    version: '1.0.3',
+    version: '1.0.4',
     timestamp: new Date().toISOString(),
     env: { 
       hasClientId: !!googleConfig.clientId, 

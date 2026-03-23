@@ -42,17 +42,18 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   const checkAuthStatus = async () => {
     try {
       const res = await fetch('/api/auth/status');
+      const text = await res.text();
+      
       if (!res.ok) {
-        const text = await res.text();
-        console.error('Auth status error response (text):', text);
+        console.error('Auth status error response:', text);
         return;
       }
       
       let data;
       try {
-        data = await res.json();
-      } catch (jsonError) {
-        console.error('Failed to parse auth status JSON:', jsonError);
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Failed to parse auth status JSON:', text);
         return;
       }
 
@@ -70,24 +71,18 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   const handleConnect = async () => {
     try {
       const res = await fetch('/api/auth/url');
-      if (!res.ok) {
-        let errorMsg = 'Erro ao obter URL de autenticação';
-        try {
-          const data = await res.json();
-          errorMsg = data.error || data.message || errorMsg;
-        } catch (e) {
-          const text = await res.text();
-          console.error('Error response body (text):', text);
-        }
-        throw new Error(errorMsg);
-      }
+      const text = await res.text();
       
       let data;
       try {
-        data = await res.json();
-      } catch (jsonError) {
-        console.error('Failed to parse auth URL JSON:', jsonError);
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Error response body (text):', text);
         throw new Error('Resposta do servidor inválida (não é JSON)');
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Erro ao obter URL de autenticação');
       }
       
       const { url } = data;
@@ -134,14 +129,22 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         body: JSON.stringify({ data })
       });
       
+      const text = await res.text();
+      let responseData;
+      try {
+        responseData = JSON.parse(text);
+      } catch (e) {
+        responseData = { error: text };
+      }
+
       if (res.ok) {
         showAlert('Sucesso', 'Backup salvo no Google Drive com sucesso!');
       } else {
-        throw new Error('Failed to upload');
+        throw new Error(responseData.error || 'Failed to upload');
       }
     } catch (error) {
       console.error('Error backing up to Drive:', error);
-      showAlert('Erro', 'Erro ao salvar backup no Google Drive.');
+      showAlert('Erro', error instanceof Error ? error.message : 'Erro ao salvar backup no Google Drive.');
     } finally {
       setIsSyncing(false);
     }
@@ -157,9 +160,20 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         setIsSyncing(true);
         try {
           const res = await fetch('/api/drive/sync');
-          if (!res.ok) throw new Error('Failed to download');
+          const text = await res.text();
           
-          const { data, message } = await res.json();
+          let responseData;
+          try {
+            responseData = JSON.parse(text);
+          } catch (e) {
+            throw new Error('Resposta do servidor inválida');
+          }
+
+          if (!res.ok) {
+            throw new Error(responseData.error || 'Failed to download');
+          }
+          
+          const { data, message } = responseData;
           if (!data) {
             showAlert('Aviso', message || 'Nenhum backup encontrado no Google Drive.');
             return;
@@ -173,7 +187,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
           }
         } catch (error) {
           console.error('Error restoring from Drive:', error);
-          showAlert('Erro', 'Erro ao restaurar backup do Google Drive.');
+          showAlert('Erro', error instanceof Error ? error.message : 'Erro ao restaurar backup do Google Drive.');
         } finally {
           setIsSyncing(false);
         }
