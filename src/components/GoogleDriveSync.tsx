@@ -46,6 +46,9 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       
       if (!res.ok) {
         console.error('Auth status error response:', text);
+        if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+          console.error('Vercel Function Invocation Failed detected in auth status.');
+        }
         return;
       }
       
@@ -78,7 +81,11 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         data = JSON.parse(text);
       } catch (e) {
         console.error('Error response body (text):', text);
-        throw new Error('Resposta do servidor inválida (não é JSON)');
+        // If it's not JSON, it might be a server error page (HTML)
+        if (text.includes('FUNCTION_INVOCATION_FAILED') || text.includes('500: INTERNAL_SERVER_ERROR')) {
+          throw new Error('O servidor da Vercel falhou ao processar a requisição (FUNCTION_INVOCATION_FAILED). Verifique os logs da Vercel.');
+        }
+        throw new Error('Resposta do servidor inválida (não é JSON). Verifique se as variáveis de ambiente GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET estão configuradas.');
       }
 
       if (!res.ok) {
@@ -134,13 +141,17 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       try {
         responseData = JSON.parse(text);
       } catch (e) {
-        responseData = { error: text };
+        console.error('Backup error text:', text);
+        if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+          throw new Error('O servidor da Vercel falhou (FUNCTION_INVOCATION_FAILED).');
+        }
+        throw new Error('Resposta do servidor inválida ao salvar backup.');
       }
 
       if (res.ok) {
         showAlert('Sucesso', 'Backup salvo no Google Drive com sucesso!');
       } else {
-        throw new Error(responseData.error || 'Failed to upload');
+        throw new Error(responseData.error || responseData.message || 'Erro ao salvar no Drive');
       }
     } catch (error) {
       console.error('Error backing up to Drive:', error);
@@ -166,11 +177,15 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
           try {
             responseData = JSON.parse(text);
           } catch (e) {
-            throw new Error('Resposta do servidor inválida');
+            console.error('Restore error text:', text);
+            if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+              throw new Error('O servidor da Vercel falhou (FUNCTION_INVOCATION_FAILED).');
+            }
+            throw new Error('Resposta do servidor inválida ao restaurar backup.');
           }
 
           if (!res.ok) {
-            throw new Error(responseData.error || 'Failed to download');
+            throw new Error(responseData.error || responseData.message || 'Erro ao restaurar do Drive');
           }
           
           const { data, message } = responseData;
