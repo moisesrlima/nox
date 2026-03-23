@@ -1,5 +1,5 @@
-import app from '../server';
+import { handler } from '../server';
 
 export const runtime = 'nodejs';
 
-export default app;
+export default handler;

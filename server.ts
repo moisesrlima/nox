@@ -3,6 +3,7 @@ import express from 'express';
 import { google } from 'googleapis';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import serverless from 'serverless-http';
 
 console.log('Server starting... Environment:', {
   NODE_ENV: process.env.NODE_ENV,
@@ -37,7 +38,7 @@ const safeHandler = (handler: (req: express.Request, res: express.Response) => P
           error: 'Internal Server Error',
           message: error instanceof Error ? error.message : String(error),
           path: req.path,
-          version: '1.0.7'
+          version: '1.0.8'
         });
       }
     }
@@ -62,7 +63,7 @@ app.use(cookieParser());
 app.get('/api/test', (req, res) => {
   res.json({ 
     status: 'ok', 
-    version: '1.0.7',
+    version: '1.0.8',
     timestamp: new Date().toISOString(),
     env: { 
       hasClientId: !!googleConfig.clientId, 
@@ -78,7 +79,7 @@ app.get('/api/test', (req, res) => {
 });
 
 app.get('/api/ping', (req, res) => {
-  res.json({ message: 'pong', time: new Date().toISOString(), version: '1.0.7' });
+  res.json({ message: 'pong', time: new Date().toISOString(), version: '1.0.8' });
 });
 
 // OAuth2 Client setup
@@ -308,9 +309,10 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
       error: 'Internal Server Error',
       message: err.message || 'Ocorreu um erro inesperado no servidor.',
       path: req.path,
-      version: '1.0.7'
+      version: '1.0.8'
     });
   }
 });
 
+export const handler = serverless(app);
 export default app;
