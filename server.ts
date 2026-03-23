@@ -12,6 +12,12 @@ console.log('Server starting... Environment:', {
   hasRedirectUri: !!process.env.GOOGLE_REDIRECT_URI
 });
 
+console.log("ENV CHECK:", {
+  clientId: !!process.env.GOOGLE_CLIENT_ID,
+  secret: !!process.env.GOOGLE_CLIENT_SECRET,
+  redirect: !!process.env.GOOGLE_REDIRECT_URI
+});
+
 // Centralized Config
 const googleConfig = {
   get clientId() { return process.env.GOOGLE_CLIENT_ID; },
@@ -31,7 +37,7 @@ const safeHandler = (handler: (req: express.Request, res: express.Response) => P
           error: 'Internal Server Error',
           message: error instanceof Error ? error.message : String(error),
           path: req.path,
-          version: '1.0.6'
+          version: '1.0.7'
         });
       }
     }
@@ -56,7 +62,7 @@ app.use(cookieParser());
 app.get('/api/test', (req, res) => {
   res.json({ 
     status: 'ok', 
-    version: '1.0.6',
+    version: '1.0.7',
     timestamp: new Date().toISOString(),
     env: { 
       hasClientId: !!googleConfig.clientId, 
@@ -72,7 +78,7 @@ app.get('/api/test', (req, res) => {
 });
 
 app.get('/api/ping', (req, res) => {
-  res.json({ message: 'pong', time: new Date().toISOString(), version: '1.0.6' });
+  res.json({ message: 'pong', time: new Date().toISOString(), version: '1.0.7' });
 });
 
 // OAuth2 Client setup
@@ -294,40 +300,17 @@ app.get('/api/drive/sync', safeHandler(async (req, res) => {
   res.json({ data: fileRes.data });
 }));
 
-// Vite middleware setup
-async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
-
-if (!process.env.VERCEL) {
-  startServer();
-}
-
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Global Error:', err);
-  res.status(err.status || 500).json({
-    error: 'Internal Server Error',
-    message: err.message || 'Ocorreu um erro inesperado no servidor.',
-    path: req.path
-  });
+  if (!res.headersSent) {
+    res.status(err.status || 500).json({
+      error: 'Internal Server Error',
+      message: err.message || 'Ocorreu um erro inesperado no servidor.',
+      path: req.path,
+      version: '1.0.7'
+    });
+  }
 });
 
 export default app;
