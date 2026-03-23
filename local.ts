@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
-import app from './server';
+import app from './api/server';
 import path from 'path';
 
 const PORT = 3000;
