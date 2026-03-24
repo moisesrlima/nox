@@ -59,7 +59,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   const checkAuthStatus = async () => {
     console.log('Checking auth status...');
     try {
-      const res = await fetch('/api/auth/status');
+      const res = await fetch(`${window.location.origin}/api/gdrive/auth-status`, { cache: 'no-store' });
       const text = await res.text();
       console.log('Auth status response received');
       
@@ -102,36 +102,46 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
     try {
       authWindow.document.write('<div style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 10px;"><h3>Conectando ao Google...</h3><p>Aguarde um momento.</p></div>');
       
-      console.log('Fetching auth URL with 15s timeout...');
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      console.log('Fetching auth URL...');
       
-      const res = await fetch('/api/auth/url', { signal: controller.signal });
-      const text = await res.text();
-      clearTimeout(timeoutId);
-      console.log('Auth URL response received. Status:', res.status);
-      
-      let data;
       try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error('Error response body (text):', text);
-        authWindow.close();
-        if (text.includes('FUNCTION_INVOCATION_FAILED') || text.includes('500: INTERNAL_SERVER_ERROR')) {
-          throw new Error('O servidor da Vercel falhou ao processar a requisição (FUNCTION_INVOCATION_FAILED). Verifique os logs da Vercel.');
+        const res = await fetch(`${window.location.origin}/api/gdrive/auth-url`, { 
+          cache: 'no-store',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        const text = await res.text();
+        console.log('Auth URL response received. Status:', res.status);
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('Error response body (text):', text);
+          authWindow.close();
+          if (text.includes('FUNCTION_INVOCATION_FAILED') || text.includes('500: INTERNAL_SERVER_ERROR')) {
+            throw new Error('O servidor da Vercel falhou ao processar a requisição (FUNCTION_INVOCATION_FAILED). Verifique os logs da Vercel.');
+          }
+          throw new Error('Resposta do servidor inválida (não é JSON). Verifique se as variáveis de ambiente GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET estão configuradas.');
         }
-        throw new Error('Resposta do servidor inválida (não é JSON). Verifique se as variáveis de ambiente GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET estão configuradas.');
-      }
 
-      if (!res.ok) {
-        console.error('Auth URL request failed:', data);
-        authWindow.close();
-        throw new Error(data.error || data.message || 'Erro ao obter URL de autenticação');
+        if (!res.ok) {
+          console.error('Auth URL request failed:', data);
+          authWindow.close();
+          throw new Error(data.error || data.message || 'Erro ao obter URL de autenticação');
+        }
+        
+        const { url } = data;
+        console.log('Redirecting popup to:', url);
+        authWindow.location.href = url;
+      } catch (fetchError: any) {
+        console.error('Fetch error details:', fetchError);
+        if (fetchError.name === 'AbortError') {
+          throw new Error('A requisição foi cancelada pelo navegador. Isso pode ser causado por um bloqueador de anúncios ou instabilidade na rede.');
+        }
+        throw fetchError;
       }
-      
-      const { url } = data;
-      console.log('Redirecting popup to:', url);
-      authWindow.location.href = url;
       
     } catch (error) {
       console.error('Error in handleConnect:', error);
@@ -144,7 +154,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch(`${window.location.origin}/api/gdrive/logout`, { method: 'POST' });
       setIsAuthenticated(false);
       setUser(null);
       setAutoSync(false);
@@ -164,7 +174,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         folders
       };
       
-      const res = await fetch('/api/drive/sync', {
+      const res = await fetch(`${window.location.origin}/api/gdrive/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data })
@@ -207,7 +217,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       async () => {
         setIsSyncing(true);
         try {
-          const res = await fetch('/api/drive/sync');
+          const res = await fetch(`${window.location.origin}/api/gdrive/sync`, { cache: 'no-store' });
           const text = await res.text();
           
           let responseData;

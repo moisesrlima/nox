@@ -10,6 +10,32 @@ export default defineConfig(({mode}) => {
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-tiptap': [
+              '@tiptap/react',
+              '@tiptap/starter-kit',
+              '@tiptap/extension-placeholder',
+              '@tiptap/extension-table',
+              '@tiptap/extension-table-row',
+              '@tiptap/extension-table-cell',
+              '@tiptap/extension-table-header',
+              '@tiptap/extension-task-list',
+              '@tiptap/extension-task-item',
+              '@tiptap/extension-typography',
+              '@tiptap/extension-image',
+              'tiptap-markdown'
+            ],
+            'vendor-icons': ['lucide-react'],
+            'vendor-utils': ['date-fns', 'uuid', 'motion'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

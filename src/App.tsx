@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Sidebar } from './components/Sidebar';
-import { Editor } from './components/Editor';
-import { WelcomeModal } from './components/WelcomeModal';
-import { ResetModal } from './components/ResetModal';
-import { SettingsModal } from './components/SettingsModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Note, Folder, INITIAL_NOTE, THEMES, ThemeId } from './types';
+
+// Lazy load components
+const Editor = lazy(() => import('./components/Editor').then(m => ({ default: m.Editor })));
+const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
+const ResetModal = lazy(() => import('./components/ResetModal').then(m => ({ default: m.ResetModal })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
@@ -175,29 +177,31 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
-      {(isFirstVisit || showWelcomeModal) && (
-        <WelcomeModal 
-          onAccept={() => {
-            setIsFirstVisit(false);
-            setShowWelcomeModal(false);
-          }} 
-        />
-      )}
+      <Suspense fallback={null}>
+        {(isFirstVisit || showWelcomeModal) && (
+          <WelcomeModal 
+            onAccept={() => {
+              setIsFirstVisit(false);
+              setShowWelcomeModal(false);
+            }} 
+          />
+        )}
 
-      {showResetModal && (
-        <ResetModal 
-          onConfirm={handleResetData}
-          onCancel={() => setShowResetModal(false)}
-        />
-      )}
+        {showResetModal && (
+          <ResetModal 
+            onConfirm={handleResetData}
+            onCancel={() => setShowResetModal(false)}
+          />
+        )}
 
-      {showSettingsModal && (
-        <SettingsModal
-          currentThemeId={currentThemeId}
-          onSelectTheme={setCurrentThemeId}
-          onClose={() => setShowSettingsModal(false)}
-        />
-      )}
+        {showSettingsModal && (
+          <SettingsModal
+            currentThemeId={currentThemeId}
+            onSelectTheme={setCurrentThemeId}
+            onClose={() => setShowSettingsModal(false)}
+          />
+        )}
+      </Suspense>
       
       <Sidebar
         notes={notes}
@@ -225,12 +229,14 @@ export default function App() {
         currentThemeId={currentThemeId}
       />
       
-      <Editor
-        note={activeNote}
-        onUpdateNote={handleUpdateNote}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        currentThemeId={currentThemeId}
-      />
+      <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]"><div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div></div>}>
+        <Editor
+          note={activeNote}
+          onUpdateNote={handleUpdateNote}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          currentThemeId={currentThemeId}
+        />
+      </Suspense>
     </div>
   );
 }

@@ -143,7 +143,8 @@ const getOAuth2Client = () => {
 };
 
 // 1. Get Auth URL
-router.get('/auth/url', envGuard, safeHandler(async (req, res) => {
+router.get(['/auth/url', '/gdrive/auth-url'], envGuard, safeHandler(async (req, res) => {
+  console.log('Generating auth URL...');
   const oauth2Client = getOAuth2Client();
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
@@ -154,11 +155,12 @@ router.get('/auth/url', envGuard, safeHandler(async (req, res) => {
       'https://www.googleapis.com/auth/userinfo.email'
     ],
   });
+  console.log('Auth URL generated successfully');
   res.json({ url });
 }));
 
 // 2. Auth Callback
-router.get(['/auth/callback'], envGuard, safeHandler(async (req, res) => {
+router.get(['/auth/callback', '/gdrive/callback'], envGuard, safeHandler(async (req, res) => {
   const { code } = req.query;
   console.log('Auth callback received. Code present:', !!code);
   
@@ -200,7 +202,7 @@ router.get(['/auth/callback'], envGuard, safeHandler(async (req, res) => {
 }));
 
 // 3. Check Auth Status
-router.get('/auth/status', safeHandler(async (req, res) => {
+router.get(['/auth/status', '/gdrive/auth-status'], safeHandler(async (req, res) => {
   const tokensStr = req.cookies?.google_tokens;
   if (!tokensStr) {
     return res.json({ authenticated: false });
@@ -236,7 +238,7 @@ router.get('/auth/status', safeHandler(async (req, res) => {
 }));
 
 // 4. Logout
-router.post('/auth/logout', (req, res) => {
+router.post(['/auth/logout', '/gdrive/logout'], (req, res) => {
   res.clearCookie('google_tokens', {
     secure: cookieOptions.secure,
     sameSite: cookieOptions.sameSite,
@@ -273,7 +275,7 @@ async function getOrCreateFolder(drive: any) {
   return folder.data.id;
 }
 
-router.post('/drive/sync', envGuard, safeHandler(async (req, res) => {
+router.post(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, res) => {
   const tokensStr = req.cookies?.google_tokens;
   if (!tokensStr) return res.status(401).json({ error: 'Not authenticated' });
 
@@ -319,7 +321,7 @@ router.post('/drive/sync', envGuard, safeHandler(async (req, res) => {
   res.json({ success: true, message: `Sincronizado na pasta ${SYNC_FOLDER_NAME}` });
 }));
 
-router.get('/drive/sync', envGuard, safeHandler(async (req, res) => {
+router.get(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, res) => {
   const tokensStr = req.cookies?.google_tokens;
   if (!tokensStr) return res.status(401).json({ error: 'Not authenticated' });
 
