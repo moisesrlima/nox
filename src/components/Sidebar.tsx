@@ -318,6 +318,25 @@ export function Sidebar({
     }
   };
 
+  const handleResetData = () => {
+    if (confirm('Isso irá apagar todas as suas notas e pastas permanentemente. Deseja continuar?')) {
+      onResetData();
+    }
+  };
+
+  const checkApiHealth = async () => {
+    console.log('Checking API health...');
+    try {
+      const res = await fetch('/api/ping');
+      const data = await res.json();
+      console.log('API Health check result:', data);
+      alert(`API Health: ${data.message || 'OK'} (v${data.version})`);
+    } catch (error) {
+      console.error('API Health check failed:', error);
+      alert(`API Health Check falhou: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
   const filteredNotes = notes
     .filter(
       (note) =>
@@ -782,6 +801,13 @@ export function Sidebar({
                   >
                     <Download className="w-4 h-4" />
                     Exportar Backup
+                  </button>
+                  <button
+                    onClick={checkApiHealth}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
+                  >
+                    <Radio className="w-4 h-4" />
+                    Diagnóstico API
                   </button>
                 </div>
               </div>

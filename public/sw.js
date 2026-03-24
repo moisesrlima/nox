@@ -14,6 +14,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Bypass cache for API and Auth routes
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);

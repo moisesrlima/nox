@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 import cookieParser from 'cookie-parser';
 import serverless from 'serverless-http';
 
-const VERSION = '1.1.4';
+const VERSION = '1.1.5';
 const isVercel = !!process.env.VERCEL;
 
 const REQUIRED_ENVS = [
@@ -137,6 +137,7 @@ router.get('/health', (req, res) => {
 // OAuth2 Client setup
 const getOAuth2Client = () => {
   const { clientId, clientSecret, redirectUri } = googleConfig;
+  console.log('Using Redirect URI:', redirectUri);
   // We don't throw here anymore, we rely on envGuard middleware for routes
   // But if called directly, we return a client that might fail later if ENVs are null
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
@@ -144,6 +145,7 @@ const getOAuth2Client = () => {
 
 // 1. Get Auth URL
 router.get('/auth/url', envGuard, safeHandler(async (req, res) => {
+  console.log('Generating Auth URL...');
   const oauth2Client = getOAuth2Client();
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
@@ -154,6 +156,7 @@ router.get('/auth/url', envGuard, safeHandler(async (req, res) => {
       'https://www.googleapis.com/auth/userinfo.email'
     ],
   });
+  console.log('Auth URL generated successfully');
   res.json({ url });
 }));
 
@@ -352,4 +355,4 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 export const appInstance = app;
-export default serverless(app);
+export default app;

@@ -85,10 +85,14 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
     try {
       authWindow.document.write('<div style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 10px;"><h3>Conectando ao Google...</h3><p>Aguarde um momento.</p></div>');
       
-      console.log('Fetching auth URL...');
-      const res = await fetch('/api/auth/url');
+      console.log('Fetching auth URL with 15s timeout...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      const res = await fetch('/api/auth/url', { signal: controller.signal });
       const text = await res.text();
-      console.log('Auth URL response received');
+      clearTimeout(timeoutId);
+      console.log('Auth URL response received. Status:', res.status);
       
       let data;
       try {
