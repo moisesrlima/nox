@@ -12,6 +12,8 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string; picture: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [autoSync, setAutoSync] = useState(() => localStorage.getItem('nox_note_auto_sync') === 'true');
+  const [lastSync, setLastSync] = useState<string | null>(() => localStorage.getItem('nox_note_last_sync'));
   const [modalState, setModalState] = useState<{ isOpen: boolean; title: string; message: string; type: 'alert' | 'confirm'; onConfirm?: () => void }>({
     isOpen: false,
     title: '',
@@ -38,6 +40,21 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Auto-sync effect
+  useEffect(() => {
+    if (!autoSync || !isAuthenticated || isSyncing) return;
+
+    const timeoutId = setTimeout(() => {
+      handleBackup(true); // silent backup
+    }, 5000); // 5s debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [notes, folders, autoSync, isAuthenticated]);
+
+  useEffect(() => {
+    localStorage.setItem('nox_note_auto_sync', String(autoSync));
+  }, [autoSync]);
 
   const checkAuthStatus = async () => {
     console.log('Checking auth status...');
@@ -130,14 +147,15 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       await fetch('/api/auth/logout', { method: 'POST' });
       setIsAuthenticated(false);
       setUser(null);
+      setAutoSync(false);
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
-  const handleBackup = async () => {
+  const handleBackup = async (silent = false) => {
     if (!isAuthenticated) return;
-    setIsSyncing(true);
+    if (!silent) setIsSyncing(true);
     try {
       const data = {
         version: 1,
@@ -165,15 +183,18 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       }
 
       if (res.ok) {
-        showAlert('Sucesso', 'Backup salvo no Google Drive com sucesso!');
+        const now = new Date().toLocaleString();
+        setLastSync(now);
+        localStorage.setItem('nox_note_last_sync', now);
+        if (!silent) showAlert('Sucesso', 'Backup salvo no Google Drive com sucesso!');
       } else {
         throw new Error(responseData.error || responseData.message || 'Erro ao salvar no Drive');
       }
     } catch (error) {
       console.error('Error backing up to Drive:', error);
-      showAlert('Erro', error instanceof Error ? error.message : 'Erro ao salvar backup no Google Drive.');
+      if (!silent) showAlert('Erro', error instanceof Error ? error.message : 'Erro ao salvar backup no Google Drive.');
     } finally {
-      setIsSyncing(false);
+      if (!silent) setIsSyncing(false);
     }
   };
 
@@ -244,16 +265,43 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       ) : (
         <div className="space-y-1">
           {user && (
-            <div className="px-3 py-2 flex items-center gap-2 text-xs text-text-muted">
-              {user.picture && <img src={user.picture} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />}
-              <span className="truncate flex-1">{user.email}</span>
-              <button onClick={handleLogout} className="p-1 hover:text-error transition-colors" title="Desconectar">
-                <LogOut className="w-3 h-3" />
-              </button>
+            <div className="px-3 py-2 flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-xs text-text-muted">
+                {user.picture && <img src={user.picture} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />}
+                <span className="truncate flex-1">{user.email}</span>
+                <button onClick={handleLogout} className="p-1 hover:text-error transition-colors" title="Desconectar">
+                  <LogOut className="w-3 h-3" />
+                </button>
+              </div>
+              {lastSync && (
+                <span className="text-[10px] text-text-muted italic px-7">
+                  Último sync: {lastSync}
+                </span>
+              )}
             </div>
           )}
+
+          <div className="px-3 py-2 flex items-center justify-between text-sm text-text-secondary">
+            <span className="flex items-center gap-2">
+              <RefreshCw className={`w-4 h-4 ${autoSync ? 'text-accent' : ''}`} />
+              Auto-sync
+            </span>
+            <button
+              onClick={() => setAutoSync(!autoSync)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                autoSync ? 'bg-accent' : 'bg-surface-hover'
+              }`}
+            >
+              <span
+                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                  autoSync ? 'translate-x-5' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
           <button
-            onClick={handleBackup}
+            onClick={() => handleBackup(false)}
             disabled={isSyncing}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors disabled:opacity-50"
           >

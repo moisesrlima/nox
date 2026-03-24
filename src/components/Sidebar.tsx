@@ -865,7 +865,7 @@ export function Sidebar({
             <span>•</span>
             <a href="/google9ca2185b737e34d3.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Verificação Google</a>
             <span>•</span>
-            <span className="opacity-50">v1.1.4</span>
+            <span className="opacity-50">v1.1.5</span>
           </div>
         </div>
       </div>

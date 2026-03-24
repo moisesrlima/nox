@@ -137,7 +137,6 @@ router.get('/health', (req, res) => {
 // OAuth2 Client setup
 const getOAuth2Client = () => {
   const { clientId, clientSecret, redirectUri } = googleConfig;
-  console.log('Using Redirect URI:', redirectUri);
   // We don't throw here anymore, we rely on envGuard middleware for routes
   // But if called directly, we return a client that might fail later if ENVs are null
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
@@ -145,7 +144,6 @@ const getOAuth2Client = () => {
 
 // 1. Get Auth URL
 router.get('/auth/url', envGuard, safeHandler(async (req, res) => {
-  console.log('Generating Auth URL...');
   const oauth2Client = getOAuth2Client();
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
@@ -156,37 +154,49 @@ router.get('/auth/url', envGuard, safeHandler(async (req, res) => {
       'https://www.googleapis.com/auth/userinfo.email'
     ],
   });
-  console.log('Auth URL generated successfully');
   res.json({ url });
 }));
 
 // 2. Auth Callback
 router.get(['/auth/callback'], envGuard, safeHandler(async (req, res) => {
   const { code } = req.query;
+  console.log('Auth callback received. Code present:', !!code);
+  
   if (!code || typeof code !== 'string') {
+    console.error('Missing or invalid code in callback');
     return res.status(400).send('Missing code');
   }
 
   const oauth2Client = getOAuth2Client();
-  const { tokens } = await oauth2Client.getToken(code);
-  
-  res.cookie('google_tokens', JSON.stringify(tokens), cookieOptions);
+  console.log('Exchanging code for tokens with redirectUri:', googleConfig.redirectUri);
+  try {
+    const { tokens } = await oauth2Client.getToken({
+      code,
+      redirect_uri: googleConfig.redirectUri
+    });
+    console.log('Tokens received successfully');
+    
+    res.cookie('google_tokens', JSON.stringify(tokens), cookieOptions);
 
-  res.send(`
-    <html>
-      <body>
-        <script>
-          if (window.opener) {
-            window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS' }, '*');
-            window.close();
-          } else {
-            window.location.href = '/';
-          }
-        </script>
-        <p>Autenticação com sucesso. Esta janela será fechada automaticamente.</p>
-      </body>
-    </html>
-  `);
+    res.send(`
+      <html>
+        <body>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS' }, '*');
+              window.close();
+            } else {
+              window.location.href = '/';
+            }
+          </script>
+          <p>Autenticação com sucesso. Esta janela será fechada automaticamente.</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Error exchanging code for tokens:', error);
+    throw error; // Let safeHandler catch it
+  }
 }));
 
 // 3. Check Auth Status
@@ -236,102 +246,116 @@ router.post('/auth/logout', (req, res) => {
 });
 
 // 5. Sync Data (Upload/Download)
-const SYNC_FILE_NAME = 'nox_note_sync.json';
+const SYNC_FOLDER_NAME = 'NoxNote_Sync';
+const SYNC_FILE_NAME = 'notes_backup.json';
+
+async function getOrCreateFolder(drive: any) {
+  const searchRes = await drive.files.list({
+    q: `name='${SYNC_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    spaces: 'drive',
+    fields: 'files(id)',
+  });
+
+  if (searchRes.data.files && searchRes.data.files.length > 0) {
+    return searchRes.data.files[0].id;
+  }
+
+  const folderMetadata = {
+    name: SYNC_FOLDER_NAME,
+    mimeType: 'application/vnd.google-apps.folder',
+  };
+
+  const folder = await drive.files.create({
+    requestBody: folderMetadata,
+    fields: 'id',
+  });
+
+  return folder.data.id;
+}
 
 router.post('/drive/sync', envGuard, safeHandler(async (req, res) => {
   const tokensStr = req.cookies?.google_tokens;
-  if (!tokensStr) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+  if (!tokensStr) return res.status(401).json({ error: 'Not authenticated' });
 
-  let tokens;
-  try {
-    tokens = JSON.parse(tokensStr);
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid token format' });
-  }
-
+  const tokens = JSON.parse(tokensStr);
   const oauth2Client = getOAuth2Client();
   oauth2Client.setCredentials(tokens);
-
-  oauth2Client.on('tokens', (newTokens) => {
-    const updatedTokens = { ...tokens, ...newTokens };
-    res.cookie('google_tokens', JSON.stringify(updatedTokens), cookieOptions);
-  });
 
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
   const { data } = req.body;
 
+  // 1. Get or create the specific folder
+  const folderId = await getOrCreateFolder(drive);
+
+  // 2. Search for the file inside that folder
   const searchRes = await drive.files.list({
-    q: `name='${SYNC_FILE_NAME}' and trashed=false`,
+    q: `name='${SYNC_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
     spaces: 'drive',
     fields: 'files(id)',
   });
 
   const files = searchRes.data.files;
-  const fileMetadata = {
-    name: SYNC_FILE_NAME,
-    mimeType: 'application/json',
-  };
   const media = {
     mimeType: 'application/json',
     body: JSON.stringify(data),
   };
 
   if (files && files.length > 0) {
-    const fileId = files[0].id!;
     await drive.files.update({
-      fileId,
+      fileId: files[0].id!,
       media,
     });
-    res.json({ success: true, message: 'Data synced successfully' });
   } else {
     await drive.files.create({
-      requestBody: fileMetadata,
+      requestBody: {
+        name: SYNC_FILE_NAME,
+        parents: [folderId],
+        mimeType: 'application/json',
+      },
       media,
       fields: 'id',
     });
-    res.json({ success: true, message: 'Data synced successfully' });
   }
+  res.json({ success: true, message: `Sincronizado na pasta ${SYNC_FOLDER_NAME}` });
 }));
 
 router.get('/drive/sync', envGuard, safeHandler(async (req, res) => {
   const tokensStr = req.cookies?.google_tokens;
-  if (!tokensStr) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
+  if (!tokensStr) return res.status(401).json({ error: 'Not authenticated' });
 
-  let tokens;
-  try {
-    tokens = JSON.parse(tokensStr);
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid token format' });
-  }
-
+  const tokens = JSON.parse(tokensStr);
   const oauth2Client = getOAuth2Client();
   oauth2Client.setCredentials(tokens);
 
-  oauth2Client.on('tokens', (newTokens) => {
-    const updatedTokens = { ...tokens, ...newTokens };
-    res.cookie('google_tokens', JSON.stringify(updatedTokens), cookieOptions);
-  });
-
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+  // 1. Find the folder
+  const folderRes = await drive.files.list({
+    q: `name='${SYNC_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    spaces: 'drive',
+    fields: 'files(id)',
+  });
+
+  if (!folderRes.data.files || folderRes.data.files.length === 0) {
+    return res.json({ data: null, message: 'Pasta de sincronização não encontrada.' });
+  }
+
+  const folderId = folderRes.data.files[0].id;
+
+  // 2. Find the file in that folder
   const searchRes = await drive.files.list({
-    q: `name='${SYNC_FILE_NAME}' and trashed=false`,
+    q: `name='${SYNC_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
     spaces: 'drive',
     fields: 'files(id)',
   });
 
   const files = searchRes.data.files;
   if (!files || files.length === 0) {
-    return res.json({ data: null, message: 'No sync file found' });
+    return res.json({ data: null, message: 'Arquivo de backup não encontrado.' });
   }
 
-  const fileId = files[0].id!;
   const fileRes = await drive.files.get({
-    fileId,
+    fileId: files[0].id!,
     alt: 'media',
   }, { responseType: 'json' });
 
@@ -355,4 +379,4 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 export const appInstance = app;
-export default app;
+export default serverless(app);
