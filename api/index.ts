@@ -3,8 +3,16 @@ import { google } from 'googleapis';
 import cookieParser from 'cookie-parser';
 import serverless from 'serverless-http';
 
-const VERSION = '1.1.5';
+const VERSION = '1.1.7';
 const isVercel = !!process.env.VERCEL;
+
+console.log('--- API BOOTSTRAP ---');
+console.log('Version:', VERSION);
+console.log('Environment:', {
+  NODE_ENV: process.env.NODE_ENV,
+  VERCEL: process.env.VERCEL,
+  VERCEL_ENV: process.env.VERCEL_ENV,
+});
 
 const REQUIRED_ENVS = [
   'GOOGLE_CLIENT_ID',
@@ -20,12 +28,7 @@ const checkEnvs = () => {
   };
 };
 
-console.log('Server starting... Environment:', {
-  NODE_ENV: process.env.NODE_ENV,
-  VERCEL: process.env.VERCEL,
-  VERCEL_ENV: process.env.VERCEL_ENV,
-  envStatus: checkEnvs()
-});
+console.log('Env Status:', checkEnvs());
 
 // Centralized Config
 const googleConfig = {
@@ -144,6 +147,8 @@ const getOAuth2Client = () => {
 
 // 1. Get Auth URL
 router.get(['/auth/url', '/gdrive/auth-url'], envGuard, safeHandler(async (req, res) => {
+  console.log('--- REQUEST: /auth/url ---');
+  console.log('Headers:', req.headers);
   console.log('Generating auth URL...');
   const oauth2Client = getOAuth2Client();
   const url = oauth2Client.generateAuthUrl({
@@ -155,7 +160,7 @@ router.get(['/auth/url', '/gdrive/auth-url'], envGuard, safeHandler(async (req, 
       'https://www.googleapis.com/auth/userinfo.email'
     ],
   });
-  console.log('Auth URL generated successfully');
+  console.log('Auth URL generated successfully:', url);
   res.json({ url });
 }));
 
@@ -380,5 +385,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   }
 });
 
+// Export the app directly for Vercel
 export const appInstance = app;
-export default serverless(app);
+export default app;

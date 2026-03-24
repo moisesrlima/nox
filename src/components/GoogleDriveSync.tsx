@@ -57,11 +57,17 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   }, [autoSync]);
 
   const checkAuthStatus = async () => {
-    console.log('Checking auth status...');
+    console.log('[GDrive] Checking auth status...');
     try {
-      const res = await fetch(`${window.location.origin}/api/gdrive/auth-status`, { cache: 'no-store' });
+      const res = await fetch('/api/gdrive/auth-status', { 
+        cache: 'no-store',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
       const text = await res.text();
-      console.log('Auth status response received');
+      console.log('[GDrive] Auth status response received');
       
       if (!res.ok) {
         console.error('Auth status error response:', text);
@@ -105,14 +111,16 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       console.log('Fetching auth URL...');
       
       try {
-        const res = await fetch(`${window.location.origin}/api/gdrive/auth-url`, { 
+        console.log('[GDrive] Fetching auth URL from: /api/gdrive/auth-url');
+        const res = await fetch('/api/gdrive/auth-url', { 
           cache: 'no-store',
           headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
           }
         });
         const text = await res.text();
-        console.log('Auth URL response received. Status:', res.status);
+        console.log('[GDrive] Auth URL response received. Status:', res.status);
         
         let data;
         try {
@@ -266,6 +274,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       
       {!isAuthenticated ? (
         <button
+          type="button"
           onClick={handleConnect}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
         >

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'noxnote-cache-v1';
+const CACHE_NAME = 'noxnote-cache-v1.1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -17,7 +17,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
   // Bypass cache for API and Auth routes
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) {
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/') || url.pathname.startsWith('/gdrive/')) {
     return;
   }
 
@@ -29,6 +29,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Service Worker activating... (v1.1)');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
