@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 import cookieParser from 'cookie-parser';
 import serverless from 'serverless-http';
 
-const VERSION = '1.1.3';
+const VERSION = '1.1.4';
 const isVercel = !!process.env.VERCEL;
 
 const REQUIRED_ENVS = [
@@ -73,6 +73,12 @@ const router = express.Router();
 
 app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
+
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
 
 // Helper for cookies
 const cookieOptions = {

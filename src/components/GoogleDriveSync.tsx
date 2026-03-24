@@ -40,15 +40,14 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   }, []);
 
   const checkAuthStatus = async () => {
+    console.log('Checking auth status...');
     try {
       const res = await fetch('/api/auth/status');
       const text = await res.text();
+      console.log('Auth status response received');
       
       if (!res.ok) {
         console.error('Auth status error response:', text);
-        if (text.includes('FUNCTION_INVOCATION_FAILED')) {
-          console.error('Vercel Function Invocation Failed detected in auth status.');
-        }
         return;
       }
       
@@ -60,6 +59,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         return;
       }
 
+      console.log('Auth status data:', data);
       setIsAuthenticated(data.authenticated);
       if (data.user) {
         setUser(data.user);
@@ -72,16 +72,30 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   };
 
   const handleConnect = async () => {
+    console.log('handleConnect started');
+    // Open a blank window immediately to avoid popup blockers
+    const authWindow = window.open('about:blank', 'oauth_popup', 'width=600,height=700');
+    
+    if (!authWindow) {
+      console.error('Popup blocked');
+      showAlert('Atenção', 'Por favor, permita popups para conectar sua conta do Google.');
+      return;
+    }
+
     try {
+      authWindow.document.write('<div style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 10px;"><h3>Conectando ao Google...</h3><p>Aguarde um momento.</p></div>');
+      
+      console.log('Fetching auth URL...');
       const res = await fetch('/api/auth/url');
       const text = await res.text();
+      console.log('Auth URL response received');
       
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
         console.error('Error response body (text):', text);
-        // If it's not JSON, it might be a server error page (HTML)
+        authWindow.close();
         if (text.includes('FUNCTION_INVOCATION_FAILED') || text.includes('500: INTERNAL_SERVER_ERROR')) {
           throw new Error('O servidor da Vercel falhou ao processar a requisição (FUNCTION_INVOCATION_FAILED). Verifique os logs da Vercel.');
         }
@@ -89,22 +103,20 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       }
 
       if (!res.ok) {
+        console.error('Auth URL request failed:', data);
+        authWindow.close();
         throw new Error(data.error || data.message || 'Erro ao obter URL de autenticação');
       }
       
       const { url } = data;
+      console.log('Redirecting popup to:', url);
+      authWindow.location.href = url;
       
-      const authWindow = window.open(
-        url,
-        'oauth_popup',
-        'width=600,height=700'
-      );
-
-      if (!authWindow) {
-        showAlert('Atenção', 'Por favor, permita popups para conectar sua conta do Google.');
-      }
     } catch (error) {
-      console.error('Error getting auth URL:', error);
+      console.error('Error in handleConnect:', error);
+      if (authWindow && !authWindow.closed) {
+        authWindow.close();
+      }
       showAlert('Erro', error instanceof Error ? error.message : 'Erro ao conectar com o Google Drive.');
     }
   };
