@@ -9,6 +9,17 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 );
 
+// Global error handler for chunk load failures
+window.addEventListener('error', (event) => {
+  const isChunkLoadFailed = /Loading chunk [\d]+ failed/.test(event.message) || 
+                            /Loading CSS chunk [\d]+ failed/.test(event.message);
+  
+  if (isChunkLoadFailed) {
+    console.log('Chunk load failed, forcing reload...');
+    window.location.reload();
+  }
+}, true);
+
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
