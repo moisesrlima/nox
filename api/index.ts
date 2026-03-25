@@ -43,11 +43,15 @@ const safeHandler = (handler: (req: express.Request, res: express.Response) => P
     try {
       await handler(req, res);
     } catch (error) {
-      console.error(`Error in ${req.path}:`, error);
+      console.error(`[API ERROR] Error in ${req.path}:`, error);
+      if (error instanceof Error) {
+        console.error('Stack:', error.stack);
+      }
       if (!res.headersSent) {
         res.status(500).json({
           error: 'Internal Server Error',
           message: error instanceof Error ? error.message : String(error),
+          stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
           path: req.path,
           version: VERSION
         });
@@ -257,73 +261,119 @@ const SYNC_FOLDER_NAME = 'NoxNote_Sync';
 const SYNC_FILE_NAME = 'notes_backup.json';
 
 async function getOrCreateFolder(drive: any) {
-  const searchRes = await drive.files.list({
-    q: `name='${SYNC_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
-    spaces: 'drive',
-    fields: 'files(id)',
-  });
+  console.log('[DRIVE] Searching for folder:', SYNC_FOLDER_NAME);
+  try {
+    const searchRes = await drive.files.list({
+      q: `name='${SYNC_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      spaces: 'drive',
+      fields: 'files(id)',
+    });
 
-  if (searchRes.data.files && searchRes.data.files.length > 0) {
-    return searchRes.data.files[0].id;
+    if (searchRes.data.files && searchRes.data.files.length > 0) {
+      console.log('[DRIVE] Folder found:', searchRes.data.files[0].id);
+      return searchRes.data.files[0].id;
+    }
+
+    console.log('[DRIVE] Folder not found, creating...');
+    const folderMetadata = {
+      name: SYNC_FOLDER_NAME,
+      mimeType: 'application/vnd.google-apps.folder',
+    };
+
+    const folder = await drive.files.create({
+      requestBody: folderMetadata,
+      fields: 'id',
+    });
+
+    console.log('[DRIVE] Folder created:', folder.data.id);
+    return folder.data.id;
+  } catch (error: any) {
+    console.error('[DRIVE] Error in getOrCreateFolder:', error);
+    if (error.response) {
+      console.error('[DRIVE] Error response data:', error.response.data);
+    }
+    throw error;
   }
-
-  const folderMetadata = {
-    name: SYNC_FOLDER_NAME,
-    mimeType: 'application/vnd.google-apps.folder',
-  };
-
-  const folder = await drive.files.create({
-    requestBody: folderMetadata,
-    fields: 'id',
-  });
-
-  return folder.data.id;
 }
 
 router.post(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, res) => {
+  console.log('[SYNC] POST request received');
   const tokensStr = req.cookies?.google_tokens;
-  if (!tokensStr) return res.status(401).json({ error: 'Not authenticated' });
+  if (!tokensStr) {
+    console.warn('[SYNC] No tokens found in cookies');
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
-  const tokens = JSON.parse(tokensStr);
+  let tokens;
+  try {
+    tokens = JSON.parse(tokensStr);
+  } catch (e) {
+    console.error('[SYNC] Failed to parse tokens:', e);
+    return res.status(401).json({ error: 'Invalid authentication tokens' });
+  }
+
   const oauth2Client = getOAuth2Client();
   oauth2Client.setCredentials(tokens);
 
+  console.log('[SYNC] Initializing Drive API...');
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
   const { data } = req.body;
 
-  // 1. Get or create the specific folder
-  const folderId = await getOrCreateFolder(drive);
-
-  // 2. Search for the file inside that folder
-  const searchRes = await drive.files.list({
-    q: `name='${SYNC_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
-    spaces: 'drive',
-    fields: 'files(id)',
-  });
-
-  const files = searchRes.data.files;
-  const media = {
-    mimeType: 'application/json',
-    body: JSON.stringify(data),
-  };
-
-  if (files && files.length > 0) {
-    await drive.files.update({
-      fileId: files[0].id!,
-      media,
-    });
-  } else {
-    await drive.files.create({
-      requestBody: {
-        name: SYNC_FILE_NAME,
-        parents: [folderId],
-        mimeType: 'application/json',
-      },
-      media,
-      fields: 'id',
-    });
+  if (!data) {
+    console.warn('[SYNC] No data in request body');
+    return res.status(400).json({ error: 'No data provided' });
   }
-  res.json({ success: true, message: `Sincronizado na pasta ${SYNC_FOLDER_NAME}` });
+
+  try {
+    // 1. Get or create the specific folder
+    console.log('[SYNC] Getting or creating folder:', SYNC_FOLDER_NAME);
+    const folderId = await getOrCreateFolder(drive);
+    console.log('[SYNC] Folder ID:', folderId);
+
+    // 2. Search for the file inside that folder
+    console.log('[SYNC] Searching for file:', SYNC_FILE_NAME);
+    const searchRes = await drive.files.list({
+      q: `name='${SYNC_FILE_NAME}' and '${folderId}' in parents and trashed=false`,
+      spaces: 'drive',
+      fields: 'files(id)',
+    });
+
+    const files = searchRes.data.files;
+    console.log('[SYNC] Files found:', files?.length || 0);
+    
+    const media = {
+      mimeType: 'application/json',
+      body: JSON.stringify(data),
+    };
+
+    if (files && files.length > 0) {
+      console.log('[SYNC] Updating existing file:', files[0].id);
+      await drive.files.update({
+        fileId: files[0].id!,
+        media,
+      });
+    } else {
+      console.log('[SYNC] Creating new file in folder:', folderId);
+      await drive.files.create({
+        requestBody: {
+          name: SYNC_FILE_NAME,
+          parents: [folderId],
+          mimeType: 'application/json',
+        },
+        media,
+        fields: 'id',
+      });
+    }
+    console.log('[SYNC] Sync successful');
+    res.json({ success: true, message: `Sincronizado na pasta ${SYNC_FOLDER_NAME}` });
+  } catch (driveError: any) {
+    console.error('[SYNC] Google Drive API Error:', driveError);
+    if (driveError.response) {
+      console.error('[SYNC] Drive API Response Data:', driveError.response.data);
+      console.error('[SYNC] Drive API Response Status:', driveError.response.status);
+    }
+    throw driveError; // Rethrow to be caught by safeHandler
+  }
 }));
 
 router.get(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, res) => {
