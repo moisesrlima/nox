@@ -3,6 +3,84 @@ import { Note } from './types';
 
 export const TEMPLATES = [
   {
+    id: 'welcome-template',
+    title: '🚀 Guia do Nox Note',
+    description: 'Apresentação completa de todas as funcionalidades.',
+    category: 'Ajuda',
+    content: `# Bem-vindo ao **Nox Note** 🚀
+
+O **Nox Note** é um bloco de notas **minimalista e poderoso**, criado para quem valoriza **foco, simplicidade e privacidade**.
+
+> 🛡️ **Local-first:** Suas notas ficam no seu navegador para acesso rápido.
+> ☁️ **Sincronização em Nuvem:** Conecte sua conta Google para salvar tudo no Google Drive!
+
+---
+
+## ✍️ Escreva do seu jeito
+
+Você pode usar **Markdown** ou o **editor visual (WYSIWYG)** para formatar suas ideias facilmente.
+
+- **Negrito**, *Itálico*, \`código\`, ~~texto riscado~~
+- Listas de tarefas interativas:
+  - [x] Conhecer o Nox Note
+  - [ ] Criar minha primeira nota
+
+---
+
+## 🎙️ Modo Aula (Novidade!)
+
+Transforme sua voz em texto em tempo real! Perfeito para reuniões, aulas ou quando a inspiração surge e você não quer digitar.
+- Digite \`/\` e selecione **"Modo Aula"** para começar a ditar.
+
+---
+
+## 🎨 Personalização Extrema
+
+Escolha o visual que mais combina com seu momento:
+- **Galeria de Temas:** Mais de 15 temas exclusivos (Zinc, Cyberpunk, Sakura, Nord, etc).
+- **Modo Escuro/Claro:** Adaptável a qualquer ambiente.
+
+---
+
+## 📂 Organização Inteligente
+
+- **Pastas:** Crie pastas e organize suas notas com facilidade.
+- **Templates:** Use nossa **Galeria de Templates** com modelos prontos para Diários, CRM, Planejadores e muito mais.
+- **Busca Rápida:** Encontre qualquer nota instantaneamente.
+
+---
+
+## 🧠 Ferramentas para Foco
+
+O Nox Note ajuda você a **entrar no fluxo de trabalho**:
+- ⏱️ Temporizador **Foco & Pausa** (Pomodoro)
+- 🎧 **Rádio Lo-Fi** integrada com sons ambientes
+- 🔊 **Leitura em voz alta** (Texto → Fala)
+
+---
+
+## 📦 Exportação e Backup
+
+Leve suas notas para onde quiser:
+- **Formatos:** PDF, HTML, TXT e agora **Imagem (PNG)**!
+- **Backup Local:** Exporte e importe todo o seu banco de dados em um clique.
+- **Google Drive:** Sincronização automática e segura.
+
+---
+
+## 🚀 Atalhos Úteis
+
+1. Digite \`/\` para abrir o menu de comandos rápidos.
+2. Use \`Ctrl + Z\` / \`Ctrl + Y\` para Desfazer e Refazer.
+3. Arraste notas para movê-las entre pastas.
+
+---
+
+**Nox Note**
+*Pensar, escrever e focar — sem distrações.*
+`
+  },
+  {
     id: 'gratitude-journal',
     title: '🌸 Diário de Gratidão',
     description: 'Um espaço para focar no que há de bom.',
