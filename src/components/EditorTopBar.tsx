@@ -49,11 +49,11 @@ export function EditorTopBar({
 }: EditorTopBarProps) {
   return (
     <>
-      <header className="flex-none h-16 border-b border-[var(--border-color)] flex items-center justify-between px-4 bg-[var(--bg-surface)] backdrop-blur-sm z-10 transition-colors">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+      <header className="flex-none h-16 border-b border-[var(--border-color)] flex items-center justify-between px-3 sm:px-4 bg-[var(--bg-surface)] backdrop-blur-sm z-10 transition-colors">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
           <button
             onClick={onToggleSidebar}
-            className="md:hidden p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+            className="md:hidden p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors flex-none"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -62,32 +62,34 @@ export function EditorTopBar({
             value={note.title}
             onChange={onTitleChange}
             placeholder="Título da nota"
-            className="flex-1 bg-transparent text-xl font-semibold text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none truncate"
+            className="flex-1 bg-transparent text-lg sm:text-xl font-semibold text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none truncate min-w-[100px]"
           />
         </div>
 
-        <div className="flex items-center gap-2 ml-4">
+        <div className="flex items-center gap-1 sm:gap-2 ml-2 sm:ml-4 flex-none">
+          {/* Mode Switch - Hidden on small mobile */}
           <div className="hidden sm:flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)]">
             <button
               onClick={() => setMode('visual')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                 mode === 'visual' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]/50'
               }`}
             >
-              <Type className="w-4 h-4" /> Visual
+              <Type className="w-4 h-4" /> <span className="hidden md:inline">Visual</span>
             </button>
             <button
               onClick={() => setMode('markdown')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                 mode === 'markdown' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]/50'
               }`}
             >
-              <Code className="w-4 h-4" /> Markdown
+              <Code className="w-4 h-4" /> <span className="hidden md:inline">Markdown</span>
             </button>
           </div>
 
+          {/* Undo/Redo - Hidden on mobile */}
           {onUndo && onRedo && (
-            <div className="hidden sm:flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)] mr-1">
+            <div className="hidden md:flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)]">
               <button
                 onClick={onUndo}
                 disabled={!canUndo}
@@ -111,71 +113,74 @@ export function EditorTopBar({
             </div>
           )}
 
-          {onGlobalPlayPause && (
-            <button
-              onClick={onGlobalPlayPause}
-              className={`p-2 rounded-lg transition-colors ${
-                isGlobalPlaying 
-                  ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
-              }`}
-              title={isGlobalPlaying ? "Pausar música/foco" : "Tocar música/foco"}
-            >
-              {isGlobalPlaying ? <Pause className="w-5 h-5" /> : <Music className="w-5 h-5" />}
-            </button>
-          )}
-
-          {onToggleReading && (
-            <div className="flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)]">
+          {/* Media & Tools */}
+          <div className="flex items-center gap-1">
+            {onGlobalPlayPause && (
               <button
-                onClick={onToggleReading}
-                className={`p-1.5 rounded-md transition-colors ${
-                  isReading 
+                onClick={onGlobalPlayPause}
+                className={`p-2 rounded-lg transition-colors ${
+                  isGlobalPlaying 
                     ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
                     : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
                 }`}
-                title={isReading ? "Parar leitura" : "Ler nota em voz alta"}
+                title={isGlobalPlaying ? "Pausar música/foco" : "Tocar música/foco"}
               >
-                <Speech className="w-5 h-5" />
+                {isGlobalPlaying ? <Pause className="w-5 h-5" /> : <Music className="w-5 h-5" />}
               </button>
-              {onChangeReadingSpeed && (
-                <button
-                  onClick={onChangeReadingSpeed}
-                  className="px-2 py-1 text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors min-w-[32px]"
-                  title="Velocidade de leitura"
-                >
-                  {readingSpeed}x
-                </button>
-              )}
-            </div>
-          )}
+            )}
 
-          <div className="relative group">
-            <button className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors flex items-center gap-2">
-              <Download className="w-5 h-5" />
-              <span className="hidden sm:inline text-sm font-medium">Exportar</span>
-            </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1">
-              <button onClick={onExportTxt} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
-                <FileType2 className="w-4 h-4" /> TXT
+            {onToggleReading && (
+              <div className="flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)]">
+                <button
+                  onClick={onToggleReading}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    isReading 
+                      ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
+                  }`}
+                  title={isReading ? "Parar leitura" : "Ler nota em voz alta"}
+                >
+                  <Speech className="w-5 h-5" />
+                </button>
+                {onChangeReadingSpeed && (
+                  <button
+                    onClick={onChangeReadingSpeed}
+                    className="hidden sm:block px-2 py-1 text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors min-w-[28px]"
+                    title="Velocidade de leitura"
+                  >
+                    {readingSpeed}x
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="relative group">
+              <button className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                <span className="hidden lg:inline text-sm font-medium">Exportar</span>
               </button>
-              <button onClick={onExportHtml} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
-                <FileCode2 className="w-4 h-4" /> HTML
-              </button>
-              <button onClick={onExportPdf} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
-                <FileText className="w-4 h-4" /> PDF
-              </button>
-              <button onClick={onExportImage} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
-                <ImageIcon className="w-4 h-4" /> Imagem (PNG)
-              </button>
+              <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-1">
+                <button onClick={onExportTxt} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
+                  <FileType2 className="w-4 h-4" /> TXT
+                </button>
+                <button onClick={onExportHtml} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
+                  <FileCode2 className="w-4 h-4" /> HTML
+                </button>
+                <button onClick={onExportPdf} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
+                  <FileText className="w-4 h-4" /> PDF
+                </button>
+                <button onClick={onExportImage} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-colors">
+                  <ImageIcon className="w-4 h-4" /> Imagem (PNG)
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="flex-none px-4 py-2 bg-[var(--bg-primary)]/30 border-b border-[var(--border-color)]/50 flex items-center gap-4 text-xs text-[var(--text-muted)] transition-colors">
-        <span>Criado: {format(note.createdAt, "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-        <span>Modificado: {format(note.updatedAt, "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+      <div className="flex-none px-3 sm:px-4 py-1.5 bg-[var(--bg-primary)]/30 border-b border-[var(--border-color)]/50 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] sm:text-xs text-[var(--text-muted)] transition-colors">
+        <span className="whitespace-nowrap">Criado: {format(note.createdAt, "dd/MM/yy HH:mm", { locale: ptBR })}</span>
+        <span className="whitespace-nowrap">Modificado: {format(note.updatedAt, "dd/MM/yy HH:mm", { locale: ptBR })}</span>
       </div>
     </>
   );
