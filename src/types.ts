@@ -1,4 +1,4 @@
-export type ThemeId = 'zinc' | 'sapphire' | 'olive' | 'sakura' | 'cyberpunk' | 'nord' | 'dracula' | 'sepia' | 'forest' | 'midnight' | 'crimson' | 'minimal-light';
+export type ThemeId = 'zinc' | 'sapphire' | 'olive' | 'sakura' | 'cyberpunk' | 'nord' | 'dracula' | 'sepia' | 'forest' | 'midnight' | 'crimson' | 'minimal-light' | 'lavender' | 'peach' | 'matcha';
 
 export interface Theme {
   id: ThemeId;
@@ -248,6 +248,63 @@ export const THEMES: Theme[] = [
       border: '#e4e4e7',
     },
     font: 'Inter',
+  },
+  {
+    id: 'lavender',
+    name: 'Lavanda',
+    description: 'Um tema suave e relaxante em tons de lavanda.',
+    isDark: false,
+    colors: {
+      primary: '#f3f0ff',
+      surface: '#f8f7ff',
+      hover: '#e5dbff',
+      active: '#d0bfff',
+      accent: '#7950f2',
+      accentSoft: '#f3f0ff',
+      textPrimary: '#2b1d52',
+      textSecondary: '#5f3dc4',
+      textMuted: '#b197fc',
+      border: '#e5dbff',
+    },
+    font: 'Inter',
+  },
+  {
+    id: 'peach',
+    name: 'Pêssego',
+    description: 'Cores quentes e aconchegantes como um entardecer.',
+    isDark: false,
+    colors: {
+      primary: '#fff5f2',
+      surface: '#fff9f7',
+      hover: '#ffe8e0',
+      active: '#ffd8cc',
+      accent: '#ff8787',
+      accentSoft: '#fff5f2',
+      textPrimary: '#4a2b2b',
+      textSecondary: '#862e2e',
+      textMuted: '#ffa8a8',
+      border: '#ffe8e0',
+    },
+    font: 'Inter',
+  },
+  {
+    id: 'matcha',
+    name: 'Matcha',
+    description: 'Um tema zen e refrescante inspirado no chá verde.',
+    isDark: false,
+    colors: {
+      primary: '#f2f7f2',
+      surface: '#f8faf8',
+      hover: '#e2ede2',
+      active: '#d1e3d1',
+      accent: '#66a166',
+      accentSoft: '#f2f7f2',
+      textPrimary: '#1e2e1e',
+      textSecondary: '#3a5a3a',
+      textMuted: '#a3c9a3',
+      border: '#e2ede2',
+    },
+    font: 'Manrope',
   },
 ];
 
