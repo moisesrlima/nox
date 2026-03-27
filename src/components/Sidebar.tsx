@@ -362,27 +362,6 @@ export function Sidebar({
           </h1>
           <div className="flex items-center gap-1">
             <button
-              onClick={onShowInfo}
-              className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
-              title="Informações de Segurança"
-            >
-              <Info className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
-            </button>
-            <button
-              onClick={onOpenThemes}
-              className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
-              title="Galeria de Temas"
-            >
-              <Palette className="w-5 h-5" />
-            </button>
-            <button
-              onClick={onOpenGallery}
-              className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
-              title="Galeria de Templates"
-            >
-              <Layout className="w-5 h-5" />
-            </button>
-            <button
               onClick={onCreateNote}
               className="p-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] hover:opacity-90 rounded-lg transition-all shadow-sm flex items-center justify-center group"
               title="Nova Nota"
@@ -830,6 +809,27 @@ export function Sidebar({
               <div>
                 <h4 className="px-3 pb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">Geral</h4>
                 <div className="space-y-1">
+                  <button
+                    onClick={onOpenThemes}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"
+                  >
+                    <Palette className="w-4 h-4" />
+                    Galeria de Temas
+                  </button>
+                  <button
+                    onClick={onOpenGallery}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"
+                  >
+                    <Layout className="w-4 h-4" />
+                    Galeria de Templates
+                  </button>
+                  <button
+                    onClick={onShowInfo}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"
+                  >
+                    <Info className="w-4 h-4" />
+                    Informações de Segurança
+                  </button>
                   <button
                     onClick={() => window.location.reload()}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"

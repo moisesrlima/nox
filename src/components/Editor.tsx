@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Note } from '../types';
+import { Note, THEMES } from '../types';
 import { 
   Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
   Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Search,
@@ -49,7 +49,8 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isUpdatingFromNote = useRef(false);
 
-  const isDarkTheme = currentThemeId === 'zinc';
+  const theme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
+  const isDarkTheme = theme.isDark;
 
   // Use refs to avoid stale closures in Tiptap handlers
   const slashMenuRef = useRef(slashMenu);

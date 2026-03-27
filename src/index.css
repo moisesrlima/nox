@@ -236,6 +236,20 @@ body {
     color: var(--accent-primary);
   }
 
+  /* Explicit Heading Colors for Themes */
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6,
+  .ProseMirror h1, .ProseMirror h2, .ProseMirror h3, .ProseMirror h4, .ProseMirror h5, .ProseMirror h6 {
+    color: var(--text-primary) !important;
+  }
+
+  /* Highlights (Mark) Contrast */
+  .prose mark, .ProseMirror mark {
+    background-color: var(--accent-primary);
+    color: var(--accent-contrast, #FFFFFF);
+    padding: 0 0.2rem;
+    border-radius: 0.2rem;
+  }
+
   .ProseMirror table {
     @apply border-collapse table-auto w-full overflow-hidden my-4 rounded-lg border;
     border-color: var(--border-color);
