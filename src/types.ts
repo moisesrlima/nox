@@ -326,9 +326,9 @@ export interface Note {
 export const INITIAL_NOTE: Note = {
   id: 'initial-note-1',
   title: 'Bem-vindo ao Nox Note',
-  content: `# Bem-vindo ao **Nox Note**
+  content: `# Bem-vindo ao **Nox Note** 🚀
 
-O **Nox Note** é um bloco de notas **minimalista**, criado para quem valoriza **foco, simplicidade e privacidade**.
+O **Nox Note** é um bloco de notas **minimalista e poderoso**, criado para quem valoriza **foco, simplicidade e privacidade**.
 
 > 🛡️ **Local-first:** Suas notas ficam no seu navegador para acesso rápido.
 > ☁️ **Sincronização em Nuvem:** Conecte sua conta Google para salvar tudo no Google Drive!
@@ -339,62 +339,59 @@ O **Nox Note** é um bloco de notas **minimalista**, criado para quem valoriza *
 
 Você pode usar **Markdown** ou o **editor visual (WYSIWYG)** para formatar suas ideias facilmente.
 
-Exemplo de formatação:
-
-- **Negrito**
-- *Itálico*
-- \`código\`
-- ~~texto riscado~~
+- **Negrito**, *Itálico*, \`código\`, ~~texto riscado~~
+- Listas de tarefas interativas:
+  - [x] Conhecer o Nox Note
+  - [ ] Criar minha primeira nota
 
 ---
 
-## 🧠 Ferramentas para foco
+## 🎙️ Modo Aula (Novidade!)
 
-O Nox Note também ajuda você a **entrar no fluxo de trabalho**:
-
-- ⏱️ Temporizador **Foco & Pausa**
-- 🎧 **Rádio Lo-Fi** integrada
-- 🔊 **Leitura em voz alta** das suas notas (Texto → Fala)
+Transforme sua voz em texto em tempo real! Perfeito para reuniões, aulas ou quando a inspiração surge e você não quer digitar.
+- Digite \`/\` e selecione **"Modo Aula"** para começar a ditar.
 
 ---
 
-## ☁️ Sincronização e Nuvem
+## 🎨 Personalização Extrema
 
-Agora você não precisa mais se preocupar em perder suas notas se limpar o cache do navegador:
-
-- Faça login com o **Google Drive** no menu inferior esquerdo.
-- Suas notas serão sincronizadas automaticamente na nuvem.
-- Acesse de qualquer dispositivo com segurança!
+Escolha o visual que mais combina com seu momento:
+- **Galeria de Temas:** Mais de 15 temas exclusivos (Zinc, Cyberpunk, Sakura, Nord, etc).
+- **Modo Escuro/Claro:** Adaptável a qualquer ambiente.
 
 ---
 
-## ✅ Exemplo de Checklist
+## 📂 Organização Inteligente
 
-- [ ] Escrever ideias
-- [ ] Conectar conta do Google Drive
-- [ ] Ouvir Lo-Fi
-- [ ] Exportar nota em PDF
-
----
-
-## 📦 Exportação de Notas
-
-Você pode exportar suas anotações facilmente:
-
-| Formato | Uso |
-|--------|-----|
-| PDF | Compartilhar ou imprimir |
-| HTML | Publicar na web |
-| TXT | Arquivo simples |
+- **Pastas:** Crie pastas e organize suas notas com facilidade.
+- **Templates:** Use nossa **Galeria de Templates** com modelos prontos para Diários, CRM, Planejadores e muito mais.
+- **Busca Rápida:** Encontre qualquer nota instantaneamente.
 
 ---
 
-## 🚀 Simples assim
+## 🧠 Ferramentas para Foco
 
-1. Capture ideias rapidamente
-2. Organize com Markdown
-3. Sincronize com a nuvem
-4. Exporte quando precisar
+O Nox Note ajuda você a **entrar no fluxo de trabalho**:
+- ⏱️ Temporizador **Foco & Pausa** (Pomodoro)
+- 🎧 **Rádio Lo-Fi** integrada com sons ambientes
+- 🔊 **Leitura em voz alta** (Texto → Fala)
+
+---
+
+## 📦 Exportação e Backup
+
+Leve suas notas para onde quiser:
+- **Formatos:** PDF, HTML, TXT e agora **Imagem (PNG)**!
+- **Backup Local:** Exporte e importe todo o seu banco de dados em um clique.
+- **Google Drive:** Sincronização automática e segura.
+
+---
+
+## 🚀 Atalhos Úteis
+
+1. Digite \`/\` para abrir o menu de comandos rápidos.
+2. Use \`Ctrl + Z\` / \`Ctrl + Y\` para Desfazer e Refazer.
+3. Arraste notas para movê-las entre pastas.
 
 ---
 
