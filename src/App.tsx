@@ -10,14 +10,14 @@ const Editor = lazy(() => import('./components/Editor').then(m => ({ default: m.
 const TemplateGallery = lazy(() => import('./components/TemplateGallery').then(m => ({ default: m.TemplateGallery })));
 const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
 const ResetModal = lazy(() => import('./components/ResetModal').then(m => ({ default: m.ResetModal })));
-const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const ThemeGallery = lazy(() => import('./components/ThemeGallery').then(m => ({ default: m.ThemeGallery })));
 
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
+  const [showThemeGallery, setShowThemeGallery] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
   const [folders, setFolders] = useLocalStorage<Folder[]>('nox-folders', []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
@@ -40,25 +40,9 @@ export default function App() {
     root.style.setProperty('--border-color', theme.colors.border);
     root.style.setProperty('--app-font', theme.font);
     
-    // Calculate contrast color for accent
-    const isDarkTheme = theme.isDark;
-    const accentContrast = isDarkTheme ? '#FFFFFF' : (theme.id === 'zinc' ? '#FFFFFF' : '#FFFFFF');
-    
-    // For light themes with dark accent (like Olive), we might want white text.
-    // For light themes with light accent, we might want dark text.
-    // But usually, the accent colors provided are meant to have white text on them.
-    // Let's refine this:
-    if (theme.id === 'zinc') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else if (theme.id === 'sapphire') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else if (theme.id === 'olive') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else if (theme.id === 'sakura') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else {
-      root.style.setProperty('--accent-contrast', isDarkTheme ? '#FFFFFF' : '#000000');
-    }
+    // Set accent contrast color
+    // Most of our accent colors are vibrant/dark enough for white text
+    root.style.setProperty('--accent-contrast', '#FFFFFF');
     
     // Update body font
     document.body.style.fontFamily = theme.font;
@@ -198,14 +182,6 @@ export default function App() {
               onCancel={() => setShowResetModal(false)}
             />
           )}
-
-          {showSettingsModal && (
-            <SettingsModal
-              currentThemeId={currentThemeId}
-              onSelectTheme={setCurrentThemeId}
-              onClose={() => setShowSettingsModal(false)}
-            />
-          )}
         </Suspense>
         
         <Sidebar
@@ -216,10 +192,12 @@ export default function App() {
             setActiveNoteId(id);
             setIsSidebarOpen(false);
             setShowTemplateGallery(false);
+            setShowThemeGallery(false);
           }}
           onCreateNote={() => {
             handleCreateNote();
             setShowTemplateGallery(false);
+            setShowThemeGallery(false);
           }}
           onDeleteNote={handleDeleteNote}
           onCreateFolder={handleCreateFolder}
@@ -232,7 +210,10 @@ export default function App() {
           onImportTemplate={handleImportTemplate}
           onShowInfo={() => setShowWelcomeModal(true)}
           onResetData={() => setShowResetModal(true)}
-          onOpenThemes={() => setShowSettingsModal(true)}
+          onOpenThemes={() => {
+            setShowThemeGallery(true);
+            setIsSidebarOpen(false);
+          }}
           onOpenGallery={() => {
             setShowTemplateGallery(true);
             setIsSidebarOpen(false);
@@ -249,12 +230,19 @@ export default function App() {
                 onClose={() => setShowTemplateGallery(false)}
                 onSelectTemplate={handleImportTemplate}
               />
+            ) : showThemeGallery ? (
+              <ThemeGallery
+                currentThemeId={currentThemeId}
+                onSelectTheme={setCurrentThemeId}
+                onClose={() => setShowThemeGallery(false)}
+              />
             ) : (
               <Editor
                 note={activeNote}
                 onUpdateNote={handleUpdateNote}
                 onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                 currentThemeId={currentThemeId}
+                autoFocus={!showWelcomeModal && !isFirstVisit && !showTemplateGallery && !showThemeGallery}
               />
             )}
           </ErrorBoundary>

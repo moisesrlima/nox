@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Note, Folder } from '../types';
+import { Note, Folder, THEMES } from '../types';
 import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText, Layout, RefreshCcw } from 'lucide-react';
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
@@ -369,6 +369,13 @@ export function Sidebar({
               <Info className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
             </button>
             <button
+              onClick={onOpenThemes}
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
+              title="Galeria de Temas"
+            >
+              <Palette className="w-5 h-5" />
+            </button>
+            <button
               onClick={onOpenGallery}
               className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
               title="Galeria de Templates"
@@ -399,6 +406,44 @@ export function Sidebar({
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          {/* Galeria de Temas */}
+          <div>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <button 
+                onClick={() => toggleSection('themes')}
+                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
+              >
+                <ChevronRight className={`w-3 h-3 transition-transform ${openSection === 'themes' ? 'rotate-90' : ''}`} />
+                Galeria de Temas
+              </button>
+              <Palette className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            </div>
+
+            {openSection === 'themes' && (
+              <div className="space-y-1">
+                <div className="grid grid-cols-5 gap-1 px-2 mb-2">
+                  {THEMES.slice(0, 5).map(theme => (
+                    <button
+                      key={theme.id}
+                      onClick={() => onOpenThemes()}
+                      className={`w-full aspect-square rounded-full border-2 transition-all hover:scale-110 ${currentThemeId === theme.id ? 'border-[var(--accent-primary)]' : 'border-transparent'}`}
+                      style={{ backgroundColor: theme.colors.accent }}
+                      title={theme.name}
+                    />
+                  ))}
+                </div>
+                
+                <button
+                  onClick={onOpenThemes}
+                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
+                >
+                  <Palette size={16} />
+                  Ver Todos os Temas
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Galeria de Templates */}
           <div>
             <div className="flex items-center justify-between px-2 mb-2">
@@ -785,13 +830,6 @@ export function Sidebar({
               <div>
                 <h4 className="px-3 pb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">Geral</h4>
                 <div className="space-y-1">
-                  <button
-                    onClick={onOpenThemes}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
-                  >
-                    <Palette className="w-4 h-4" />
-                    Temas
-                  </button>
                   <button
                     onClick={() => window.location.reload()}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"

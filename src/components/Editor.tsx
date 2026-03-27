@@ -34,9 +34,10 @@ interface EditorProps {
   onUpdateNote: (id: string, updates: Partial<Note>) => void;
   onToggleSidebar: () => void;
   currentThemeId: string;
+  autoFocus?: boolean;
 }
 
-export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: EditorProps) {
+export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, autoFocus }: EditorProps) {
   const [mode, setMode] = useState<'visual' | 'markdown'>('visual');
   const [slashMenu, setSlashMenu] = useState<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -306,6 +307,21 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
       setMode('visual');
     }
   }, [note?.id]);
+
+  // Auto-focus editor when note changes or autoFocus prop is true
+  useEffect(() => {
+    if (note && autoFocus) {
+      const timer = setTimeout(() => {
+        if (mode === 'visual' && editor) {
+          editor.commands.focus('start');
+        } else if (mode === 'markdown' && textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(0, 0);
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [note?.id, editor, mode, autoFocus]);
 
   if (!note) {
     return (

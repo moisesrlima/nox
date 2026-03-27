@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Search, Plus, Layout, User, GraduationCap, Briefcase, Rocket, Brain, Coffee } from 'lucide-react';
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { Note } from '../types';
+import { TemplatePreviewModal } from './TemplatePreviewModal';
 
 interface TemplateGalleryProps {
   onClose: () => void;
@@ -22,6 +23,8 @@ const CATEGORIES = [
 export function TemplateGallery({ onClose, onSelectTemplate }: TemplateGalleryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [previewTemplate, setPreviewTemplate] = useState<{ id: string; title: string; description: string; content: string; category: string } | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const filteredTemplates = TEMPLATES.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -108,13 +111,23 @@ export function TemplateGallery({ onClose, onSelectTemplate }: TemplateGalleryPr
                   {template.description}
                 </p>
               </div>
-              <div className="p-4 bg-[var(--bg-hover)]/30 border-t border-[var(--border-color)] flex items-center justify-between">
+              <div className="p-4 bg-[var(--bg-hover)]/30 border-t border-[var(--border-color)] flex items-center justify-between gap-2">
+                <button
+                  onClick={() => {
+                    setPreviewTemplate(template);
+                    setIsPreviewOpen(true);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded-xl text-sm font-bold hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
+                >
+                  <Layout size={14} />
+                  Visualizar
+                </button>
                 <button
                   onClick={() => handleSelect(template.id)}
-                  className="flex items-center gap-2 px-4 py-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl text-sm font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-[var(--accent-primary)]/20"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl text-sm font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-[var(--accent-primary)]/20"
                 >
-                  <Plus size={16} />
-                  Usar Template
+                  <Plus size={14} />
+                  Usar
                 </button>
               </div>
             </motion.div>
@@ -131,6 +144,13 @@ export function TemplateGallery({ onClose, onSelectTemplate }: TemplateGalleryPr
           </div>
         )}
       </div>
+
+      <TemplatePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        onConfirm={() => previewTemplate && handleSelect(previewTemplate.id)}
+        template={previewTemplate}
+      />
     </div>
   );
 }
