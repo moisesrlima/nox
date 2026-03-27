@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo, Image as ImageIcon } from 'lucide-react';
+import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo, Image as ImageIcon, MicOff } from 'lucide-react';
 import { Note } from '../types';
 
 interface EditorTopBarProps {
@@ -24,6 +24,8 @@ interface EditorTopBarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  isRecording?: boolean;
+  onStopRecording?: () => void;
 }
 
 export function EditorTopBar({
@@ -45,7 +47,9 @@ export function EditorTopBar({
   onUndo,
   onRedo,
   canUndo = false,
-  canRedo = false
+  canRedo = false,
+  isRecording = false,
+  onStopRecording
 }: EditorTopBarProps) {
   return (
     <>
@@ -115,6 +119,19 @@ export function EditorTopBar({
 
           {/* Media & Tools */}
           <div className="flex items-center gap-1">
+            {isRecording && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-full mr-1 animate-pulse">
+                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="hidden sm:inline text-[10px] font-bold text-red-500 uppercase tracking-widest">Gravando</span>
+                <button 
+                  onClick={onStopRecording}
+                  className="p-1 hover:bg-red-500/20 rounded-full transition-colors"
+                  title="Parar Gravação"
+                >
+                  <MicOff className="w-3 h-3 text-red-500" />
+                </button>
+              </div>
+            )}
             {onGlobalPlayPause && (
               <button
                 onClick={onGlobalPlayPause}

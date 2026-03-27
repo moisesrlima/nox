@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  Table, List, Heading1, Heading2, Minus, CheckSquare, Code, Image
+  Table, List, Heading1, Heading2, Minus, CheckSquare, Code, Image, Mic
 } from 'lucide-react';
 
 export interface CommandItem {
@@ -22,6 +22,12 @@ export const getSlashCommands = (onSelect: (cmd: string) => void): CommandItem[]
     description: 'Título de seção média',
     icon: <Heading2 className="w-4 h-4" />,
     command: () => onSelect('h2'),
+  },
+  {
+    title: 'Modo Aula',
+    description: 'Transformar voz em texto (Modo Aula)',
+    icon: <Mic className="w-4 h-4" />,
+    command: () => onSelect('speech'),
   },
   {
     title: 'Lista',

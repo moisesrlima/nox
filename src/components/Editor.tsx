@@ -6,7 +6,7 @@ import {
   Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
   Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Search,
   Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon, Image as ImageIcon,
-  HelpCircle, X, Undo, Redo
+  HelpCircle, X, Undo, Redo, Mic, MicOff
 } from 'lucide-react';
 
 // Tiptap imports
@@ -45,9 +45,11 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
   const [isReading, setIsReading] = useState(false);
   const [readingSpeed, setReadingSpeed] = useState<number>(1);
   const [isGlobalPlaying, setIsGlobalPlaying] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isUpdatingFromNote = useRef(false);
+  const recognitionRef = useRef<any>(null);
 
   const theme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
   const isDarkTheme = theme.isDark;
@@ -75,6 +77,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
       switch (normalizedType) {
         case 'título 1': case 'h1': editor.commands.setHeading({ level: 1 }); break;
         case 'título 2': case 'h2': editor.commands.setHeading({ level: 2 }); break;
+        case 'modo aula': case 'speech': startSpeechToText(); break;
         case 'lista': case 'list': editor.commands.toggleBulletList(); break;
         case 'checklist': editor.commands.toggleTaskList(); break;
         case 'código': case 'codeblock': editor.commands.toggleCodeBlock(); break;
@@ -97,6 +100,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
       switch (normalizedType) {
         case 'título 1': case 'h1': snippet = '# '; break;
         case 'título 2': case 'h2': snippet = '## '; break;
+        case 'modo aula': case 'speech': startSpeechToText(); return;
         case 'lista': case 'list': snippet = '- '; break;
         case 'checklist': snippet = '- [ ] '; break;
         case 'código': case 'codeblock': snippet = '\n```\n\n```\n'; break;
@@ -120,6 +124,79 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
     }
     setSlashMenu(prev => ({ ...prev, active: false }));
   };
+
+  const startSpeechToText = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert('Seu navegador não suporta reconhecimento de voz.');
+      return;
+    }
+
+    if (isRecording) {
+      stopSpeechToText();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        if (mode === 'visual' && editor) {
+          editor.commands.insertContent(finalTranscript + ' ');
+        } else if (mode === 'markdown' && note) {
+          const newContent = note.content + ' ' + finalTranscript;
+          onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      stopSpeechToText();
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+
+  const stopSpeechToText = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
 
   // Tiptap Editor
   const editor = useEditor({
@@ -657,6 +734,8 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
         onRedo={() => editor?.chain().focus().redo().run()}
         canUndo={editor?.can().undo() ?? false}
         canRedo={editor?.can().redo() ?? false}
+        isRecording={isRecording}
+        onStopRecording={stopSpeechToText}
       />
 
       <div className="flex-1 overflow-hidden relative">
