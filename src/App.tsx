@@ -151,6 +151,7 @@ export default function App() {
     setActiveNoteId(template.id);
     setIsSidebarOpen(false);
     setShowTemplateGallery(false);
+    setShowThemeGallery(false);
   };
 
   const handleImport = (importedNotes: Note[]) => {
@@ -212,10 +213,12 @@ export default function App() {
           onResetData={() => setShowResetModal(true)}
           onOpenThemes={() => {
             setShowThemeGallery(true);
+            setShowTemplateGallery(false);
             setIsSidebarOpen(false);
           }}
           onOpenGallery={() => {
             setShowTemplateGallery(true);
+            setShowThemeGallery(false);
             setIsSidebarOpen(false);
           }}
           isOpen={isSidebarOpen}
