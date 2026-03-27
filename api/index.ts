@@ -185,9 +185,22 @@ router.get(['/auth/callback', '/gdrive/callback'], envGuard, safeHandler(async (
       code,
       redirect_uri: googleConfig.redirectUri
     });
-    console.log('Tokens received successfully');
+    console.log('Tokens received successfully. Has refresh_token:', !!tokens.refresh_token);
     
-    res.cookie('google_tokens', JSON.stringify(tokens), cookieOptions);
+    // Merge with existing tokens to avoid losing the refresh_token
+    const existingTokensStr = req.cookies?.google_tokens;
+    let finalTokens = tokens;
+    if (existingTokensStr) {
+      try {
+        const existingTokens = JSON.parse(existingTokensStr);
+        finalTokens = { ...existingTokens, ...tokens };
+        console.log('Merged new tokens with existing tokens');
+      } catch (e) {
+        console.warn('Failed to parse existing tokens for merging');
+      }
+    }
+
+    res.cookie('google_tokens', JSON.stringify(finalTokens), cookieOptions);
 
     res.send(`
       <html>
@@ -223,27 +236,49 @@ router.get(['/auth/status', '/gdrive/auth-status'], safeHandler(async (req, res)
   } catch (e) {
     return res.json({ authenticated: false, error: 'Invalid token format' });
   }
-  
-  const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-    headers: {
-      Authorization: `Bearer ${tokens.access_token}`
-    }
-  });
 
-  if (!response.ok) {
-    return res.json({ authenticated: false, error: 'Token expired or invalid' });
+  const oauth2Client = getOAuth2Client();
+  oauth2Client.setCredentials(tokens);
+
+  // Handle token refresh in status check
+  if (tokens.expiry_date && tokens.expiry_date <= Date.now() + 60000) {
+    if (tokens.refresh_token) {
+      try {
+        const { credentials } = await oauth2Client.refreshAccessToken();
+        const updatedTokens = { ...tokens, ...credentials };
+        oauth2Client.setCredentials(updatedTokens);
+        res.cookie('google_tokens', JSON.stringify(updatedTokens), cookieOptions);
+        tokens = updatedTokens;
+      } catch (e) {
+        return res.json({ authenticated: false, error: 'Refresh failed' });
+      }
+    }
   }
+  
+  try {
+    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`
+      }
+    });
 
-  const userInfo = await response.json();
-
-  res.json({
-    authenticated: true,
-    user: {
-      name: userInfo.name,
-      email: userInfo.email,
-      picture: userInfo.picture
+    if (!response.ok) {
+      return res.json({ authenticated: false, error: 'Token expired or invalid' });
     }
-  });
+
+    const userInfo = await response.json();
+
+    res.json({
+      authenticated: true,
+      user: {
+        name: userInfo.name,
+        email: userInfo.email,
+        picture: userInfo.picture
+      }
+    });
+  } catch (error) {
+    res.json({ authenticated: false, error: 'Fetch failed' });
+  }
 }));
 
 // 4. Logout
@@ -301,7 +336,7 @@ router.post(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, r
   const tokensStr = req.cookies?.google_tokens;
   if (!tokensStr) {
     console.warn('[SYNC] No tokens found in cookies');
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'Not authenticated', message: 'Você não está autenticado com o Google.' });
   }
 
   let tokens;
@@ -309,11 +344,45 @@ router.post(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, r
     tokens = JSON.parse(tokensStr);
   } catch (e) {
     console.error('[SYNC] Failed to parse tokens:', e);
-    return res.status(401).json({ error: 'Invalid authentication tokens' });
+    return res.status(401).json({ error: 'Invalid authentication tokens', message: 'Sessão inválida. Por favor, reconecte sua conta.' });
   }
 
   const oauth2Client = getOAuth2Client();
   oauth2Client.setCredentials(tokens);
+
+  console.log('[SYNC] Tokens parsed. Access token length:', tokens.access_token?.length);
+  console.log('[SYNC] Has refresh token:', !!tokens.refresh_token);
+  console.log('[SYNC] Expiry date:', tokens.expiry_date);
+
+  // Handle token refresh if needed
+  if (tokens.expiry_date && tokens.expiry_date <= Date.now() + 60000) { // 1 min buffer
+    console.log('[SYNC] Token expired or expiring soon, attempting refresh...');
+    if (tokens.refresh_token) {
+      try {
+        // oauth2Client.refreshAccessToken() is deprecated in newer versions, 
+        // but setCredentials + getAccessToken() or just letting the drive client handle it is preferred.
+        // However, we want to persist the new access_token.
+        const { credentials } = await oauth2Client.refreshAccessToken();
+        console.log('[SYNC] Token refreshed successfully');
+        const updatedTokens = { ...tokens, ...credentials };
+        oauth2Client.setCredentials(updatedTokens);
+        res.cookie('google_tokens', JSON.stringify(updatedTokens), cookieOptions);
+      } catch (refreshError: any) {
+        console.error('[SYNC] Failed to refresh token:', refreshError);
+        return res.status(401).json({ 
+          error: 'Refresh failed', 
+          message: 'Sua sessão expirou e não pôde ser renovada automaticamente. Por favor, reconecte sua conta.',
+          details: refreshError.message 
+        });
+      }
+    } else {
+      console.warn('[SYNC] Token expired and no refresh_token available');
+      return res.status(401).json({ 
+        error: 'No refresh token', 
+        message: 'Sua sessão expirou. Como o token de renovação está ausente, você precisa reconectar sua conta.' 
+      });
+    }
+  }
 
   console.log('[SYNC] Initializing Drive API...');
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
@@ -323,6 +392,8 @@ router.post(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, r
     console.warn('[SYNC] No data in request body');
     return res.status(400).json({ error: 'No data provided' });
   }
+
+  console.log(`[SYNC] Data size: ${JSON.stringify(data).length} bytes`);
 
   try {
     // 1. Get or create the specific folder
@@ -345,6 +416,8 @@ router.post(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, r
       mimeType: 'application/json',
       body: JSON.stringify(data),
     };
+
+    console.log('[SYNC] Media body length:', media.body.length);
 
     if (files && files.length > 0) {
       console.log('[SYNC] Updating existing file:', files[0].id);
@@ -378,11 +451,33 @@ router.post(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, r
 
 router.get(['/drive/sync', '/gdrive/sync'], envGuard, safeHandler(async (req, res) => {
   const tokensStr = req.cookies?.google_tokens;
-  if (!tokensStr) return res.status(401).json({ error: 'Not authenticated' });
+  if (!tokensStr) return res.status(401).json({ error: 'Not authenticated', message: 'Não autenticado.' });
 
-  const tokens = JSON.parse(tokensStr);
+  let tokens;
+  try {
+    tokens = JSON.parse(tokensStr);
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid tokens', message: 'Sessão inválida.' });
+  }
+
   const oauth2Client = getOAuth2Client();
   oauth2Client.setCredentials(tokens);
+
+  // Handle token refresh for GET as well
+  if (tokens.expiry_date && tokens.expiry_date <= Date.now() + 60000) {
+    if (tokens.refresh_token) {
+      try {
+        const { credentials } = await oauth2Client.refreshAccessToken();
+        const updatedTokens = { ...tokens, ...credentials };
+        oauth2Client.setCredentials(updatedTokens);
+        res.cookie('google_tokens', JSON.stringify(updatedTokens), cookieOptions);
+      } catch (e) {
+        return res.status(401).json({ error: 'Refresh failed', message: 'Sessão expirada.' });
+      }
+    } else {
+      return res.status(401).json({ error: 'Expired', message: 'Sessão expirada.' });
+    }
+  }
 
   const drive = google.drive({ version: 'v3', auth: oauth2Client });
 

@@ -182,9 +182,12 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         folders
       };
       
-      const res = await fetch(`${window.location.origin}/api/gdrive/sync`, {
+      const res = await fetch('/api/gdrive/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
         body: JSON.stringify({ data })
       });
       
@@ -193,7 +196,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       try {
         responseData = JSON.parse(text);
       } catch (e) {
-        console.error('Backup error text:', text);
+        console.error('[GDrive] Backup error text:', text);
         if (text.includes('FUNCTION_INVOCATION_FAILED')) {
           throw new Error('O servidor da Vercel falhou (FUNCTION_INVOCATION_FAILED).');
         }
@@ -206,7 +209,9 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         localStorage.setItem('nox_note_last_sync', now);
         if (!silent) showAlert('Sucesso', 'Backup salvo no Google Drive com sucesso!');
       } else {
-        throw new Error(responseData.error || responseData.message || 'Erro ao salvar no Drive');
+        console.error('[GDrive] Full error response:', responseData);
+        const errorMsg = responseData.message || responseData.error || 'Erro ao salvar no Drive';
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('Error backing up to Drive:', error);
@@ -225,14 +230,17 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       async () => {
         setIsSyncing(true);
         try {
-          const res = await fetch(`${window.location.origin}/api/gdrive/sync`, { cache: 'no-store' });
+          const res = await fetch('/api/gdrive/sync', { 
+            cache: 'no-store',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          });
           const text = await res.text();
           
           let responseData;
           try {
             responseData = JSON.parse(text);
           } catch (e) {
-            console.error('Restore error text:', text);
+            console.error('[GDrive] Restore error text:', text);
             if (text.includes('FUNCTION_INVOCATION_FAILED')) {
               throw new Error('O servidor da Vercel falhou (FUNCTION_INVOCATION_FAILED).');
             }
@@ -240,7 +248,9 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
           }
 
           if (!res.ok) {
-            throw new Error(responseData.error || responseData.message || 'Erro ao restaurar do Drive');
+            console.error('[GDrive] Restore error response:', responseData);
+            const errorMsg = responseData.message || responseData.error || 'Erro ao restaurar do Drive';
+            throw new Error(errorMsg);
           }
           
           const { data, message } = responseData;

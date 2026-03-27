@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note, Folder } from '../types';
-import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText } from 'lucide-react';
+import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText, Layout, RefreshCcw } from 'lucide-react';
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
 import { GoogleDriveSync } from './GoogleDriveSync';
+import { APP_VERSION } from '../constants';
 
 interface SidebarProps {
   notes: Note[];
@@ -25,6 +26,7 @@ interface SidebarProps {
   onShowInfo: () => void;
   onResetData: () => void;
   onOpenThemes: () => void;
+  onOpenGallery: () => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   currentThemeId: string;
@@ -48,6 +50,7 @@ export function Sidebar({
   onShowInfo,
   onResetData,
   onOpenThemes,
+  onOpenGallery,
   isOpen,
   setIsOpen,
   currentThemeId,
@@ -366,6 +369,13 @@ export function Sidebar({
               <Info className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]" />
             </button>
             <button
+              onClick={onOpenGallery}
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group"
+              title="Galeria de Templates"
+            >
+              <Layout className="w-5 h-5" />
+            </button>
+            <button
               onClick={onCreateNote}
               className="p-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] hover:opacity-90 rounded-lg transition-all shadow-sm flex items-center justify-center group"
               title="Nova Nota"
@@ -389,6 +399,49 @@ export function Sidebar({
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          {/* Galeria de Templates */}
+          <div>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <button 
+                onClick={() => toggleSection('templates')}
+                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
+              >
+                <ChevronRight className={`w-3 h-3 transition-transform ${isTemplatesOpen ? 'rotate-90' : ''}`} />
+                Galeria de Templates
+              </button>
+              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            </div>
+
+            {isTemplatesOpen && (
+              <div className="space-y-1">
+                {TEMPLATES.slice(0, 5).map(template => (
+                  <button
+                    key={template.id}
+                    onClick={() => {
+                      setPreviewTemplate(template);
+                      setIsPreviewOpen(true);
+                    }}
+                    className="w-full text-left p-2 rounded-lg hover:bg-[var(--bg-hover)] transition-all group border border-transparent hover:border-[var(--border-color)]"
+                  >
+                    <div className="text-xs font-bold text-[var(--text-primary)] mb-0.5 flex items-center gap-2">
+                      <FileText size={12} className="text-[var(--text-muted)]" />
+                      {template.title}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-muted)] line-clamp-1 pl-5">{template.description}</div>
+                  </button>
+                ))}
+                
+                <button
+                  onClick={onOpenGallery}
+                  className="w-full flex items-center justify-center gap-2 p-2.5 mt-2 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
+                >
+                  <Layout size={16} />
+                  Ver Todos os Templates
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Folders Section */}
           <div>
             <div className="flex items-center justify-between px-2 mb-2">
@@ -505,8 +558,17 @@ export function Sidebar({
           >
             <h4 className="px-2 mb-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Notas</h4>
             {filteredNotes.filter(n => !n.folderId).length === 0 ? (
-              <div className="text-center text-[var(--text-muted)] text-xs py-4">
-                {searchQuery ? 'Nenhuma nota encontrada.' : 'Sem notas avulsas.'}
+              <div className="text-center text-[var(--text-muted)] text-xs py-8 px-4 bg-[var(--bg-surface)]/30 rounded-2xl border border-dashed border-[var(--border-color)]">
+                <p className="mb-4">{searchQuery ? 'Nenhuma nota encontrada.' : 'Sua lista de notas está vazia.'}</p>
+                {!searchQuery && (
+                  <button
+                    onClick={onOpenGallery}
+                    className="w-full flex items-center justify-center gap-2 p-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl font-bold hover:scale-105 transition-all shadow-md shadow-[var(--accent-primary)]/20"
+                  >
+                    <Sparkles size={14} />
+                    Usar um Template
+                  </button>
+                )}
               </div>
             ) : (
               filteredNotes
@@ -550,45 +612,6 @@ export function Sidebar({
         </div>
 
         <div className="p-4 border-t border-border space-y-3">
-          {/* Galeria de Templates */}
-          <div>
-            <button
-              onClick={() => toggleSection('templates')}
-              className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
-                isTemplatesOpen 
-                  ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)] font-medium' 
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Galeria de Templates
-              </div>
-              <ChevronUp
-                className={`w-4 h-4 transition-transform ${
-                  isTemplatesOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isTemplatesOpen && (
-              <div className="mt-2 space-y-2 p-2 bg-[var(--bg-surface)]/50 rounded-lg border border-[var(--border-color)]/50">
-                {TEMPLATES.map(template => (
-                  <button
-                    key={template.id}
-                    onClick={() => {
-                      setPreviewTemplate(template);
-                      setIsPreviewOpen(true);
-                    }}
-                    className="w-full text-left p-2 rounded-md hover:bg-[var(--bg-hover)] transition-all group"
-                  >
-                    <div className="text-xs font-bold text-[var(--text-primary)] mb-0.5">{template.title}</div>
-                    <div className="text-[10px] text-[var(--text-muted)] line-clamp-1">{template.description}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Pomodoro Timer */}
           <div>
             <button
@@ -770,6 +793,13 @@ export function Sidebar({
                     Temas
                   </button>
                   <button
+                    onClick={() => window.location.reload()}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"
+                  >
+                    <RefreshCcw className="w-4 h-4" />
+                    Recarregar Aplicativo
+                  </button>
+                  <button
                     onClick={handleShare}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
                   >
@@ -859,13 +889,16 @@ export function Sidebar({
           />
 
           <div className="pt-4 mt-2 border-t border-[var(--border-color)]/30 text-[10px] text-[var(--text-muted)] flex flex-wrap justify-center gap-x-1 gap-y-1">
-            <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Política de Privacidade</a>
+            <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Privacidade</a>
             <span>•</span>
-            <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Termos de Serviço</a>
+            <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Termos</a>
             <span>•</span>
-            <a href="/google9ca2185b737e34d3.html" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">Verificação Google</a>
-            <span>•</span>
-            <span className="opacity-50">v1.1.5</span>
+            <span className="opacity-50">v{APP_VERSION}</span>
+          </div>
+          <div className="mt-2 flex items-center justify-center px-3">
+            <span className="text-[10px] text-[var(--text-muted)] font-medium">
+              NoxNote © 2026
+            </span>
           </div>
         </div>
       </div>
