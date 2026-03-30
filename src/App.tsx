@@ -5,6 +5,10 @@ import { useLocalStorage } from './hooks/useLocalStorage';
 import { Note, Folder, INITIAL_NOTE, THEMES, ThemeId } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+import { NoxFlow } from './components/NoxFlow';
+import { NoxFlowMini } from './components/NoxFlowMini';
+import { FloatingNoxFlowWidget } from './components/FloatingNoxFlowWidget';
+
 // Lazy load components
 const Editor = lazy(() => import('./components/Editor').then(m => ({ default: m.Editor })));
 const TemplateGallery = lazy(() => import('./components/TemplateGallery').then(m => ({ default: m.TemplateGallery })));
@@ -18,6 +22,8 @@ export default function App() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [showThemeGallery, setShowThemeGallery] = useState(false);
+  const [showNoxFlow, setShowNoxFlow] = useState(false);
+  const [showNoxFlowMini, setShowNoxFlowMini] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
   const [folders, setFolders] = useLocalStorage<Folder[]>('nox-folders', []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
@@ -194,11 +200,13 @@ export default function App() {
             setIsSidebarOpen(false);
             setShowTemplateGallery(false);
             setShowThemeGallery(false);
+            setShowNoxFlow(false);
           }}
           onCreateNote={() => {
             handleCreateNote();
             setShowTemplateGallery(false);
             setShowThemeGallery(false);
+            setShowNoxFlow(false);
           }}
           onDeleteNote={handleDeleteNote}
           onCreateFolder={handleCreateFolder}
@@ -214,10 +222,18 @@ export default function App() {
           onOpenThemes={() => {
             setShowThemeGallery(true);
             setShowTemplateGallery(false);
+            setShowNoxFlow(false);
             setIsSidebarOpen(false);
           }}
           onOpenGallery={() => {
             setShowTemplateGallery(true);
+            setShowThemeGallery(false);
+            setShowNoxFlow(false);
+            setIsSidebarOpen(false);
+          }}
+          onOpenNoxFlow={() => {
+            setShowNoxFlow(true);
+            setShowTemplateGallery(false);
             setShowThemeGallery(false);
             setIsSidebarOpen(false);
           }}
@@ -228,7 +244,9 @@ export default function App() {
         
         <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]"><div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div></div>}>
           <ErrorBoundary>
-            {showTemplateGallery ? (
+            {showNoxFlow ? (
+              <NoxFlow onClose={() => setShowNoxFlow(false)} />
+            ) : showTemplateGallery ? (
               <TemplateGallery
                 onClose={() => setShowTemplateGallery(false)}
                 onSelectTemplate={handleImportTemplate}
@@ -240,13 +258,26 @@ export default function App() {
                 onClose={() => setShowThemeGallery(false)}
               />
             ) : (
-              <Editor
-                note={activeNote}
-                onUpdateNote={handleUpdateNote}
-                onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                currentThemeId={currentThemeId}
-                autoFocus={!showWelcomeModal && !isFirstVisit && !showTemplateGallery && !showThemeGallery}
-              />
+              <div className="flex-1 flex overflow-hidden">
+                <Editor
+                  note={activeNote}
+                  onUpdateNote={handleUpdateNote}
+                  onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                  onToggleNoxFlowMini={() => setShowNoxFlowMini(!showNoxFlowMini)}
+                  currentThemeId={currentThemeId}
+                  autoFocus={!showWelcomeModal && !isFirstVisit && !showTemplateGallery && !showThemeGallery && !showNoxFlow}
+                />
+                {showNoxFlowMini && (
+                  <NoxFlowMini 
+                    onClose={() => setShowNoxFlowMini(false)} 
+                    onOpenFull={() => {
+                      setShowNoxFlowMini(false);
+                      setShowNoxFlow(true);
+                    }} 
+                  />
+                )}
+                <FloatingNoxFlowWidget />
+              </div>
             )}
           </ErrorBoundary>
         </Suspense>

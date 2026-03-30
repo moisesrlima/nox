@@ -33,18 +33,18 @@ interface EditorProps {
   note: Note | null;
   onUpdateNote: (id: string, updates: Partial<Note>) => void;
   onToggleSidebar: () => void;
+  onToggleNoxFlowMini?: () => void;
   currentThemeId: string;
   autoFocus?: boolean;
 }
 
-export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, autoFocus }: EditorProps) {
+export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMini, currentThemeId, autoFocus }: EditorProps) {
   const [mode, setMode] = useState<'visual' | 'markdown'>('visual');
   const [slashMenu, setSlashMenu] = useState<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showCheatsheet, setShowCheatsheet] = useState(false);
   const [isReading, setIsReading] = useState(false);
   const [readingSpeed, setReadingSpeed] = useState<number>(1);
-  const [isGlobalPlaying, setIsGlobalPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -681,22 +681,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
     }
   };
 
-  const handleGlobalPlayPause = () => {
-    if (isGlobalPlaying) {
-      if (isReading) {
-        stopReading({
-          onReadingChange: setIsReading,
-          onGlobalPlayingChange: setIsGlobalPlaying
-        });
-      }
-      setIsGlobalPlaying(false);
-      window.dispatchEvent(new CustomEvent('radio-control', { detail: { action: 'pause' } }));
-    } else {
-      window.dispatchEvent(new CustomEvent('radio-control', { detail: { action: 'play' } }));
-      setIsGlobalPlaying(true);
-    }
-  };
-
   return (
     <div className="flex-1 flex flex-col h-screen bg-[var(--bg-primary)] overflow-hidden relative">
       <EditorTopBar
@@ -704,6 +688,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
         mode={mode}
         setMode={setMode}
         onToggleSidebar={onToggleSidebar}
+        onToggleNoxFlowMini={onToggleNoxFlowMini}
         onTitleChange={handleTitleChange}
         onExportTxt={exportTxt}
         onExportHtml={exportHtml}
@@ -711,25 +696,23 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId, au
         onExportImage={exportImage}
         isReading={isReading}
         readingSpeed={readingSpeed}
-        isGlobalPlaying={isGlobalPlaying}
         onToggleReading={() => {
           if (isReading) {
-            stopReading({ onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+            stopReading({ onReadingChange: setIsReading });
           } else {
-            readNote({ note, mode, editor, speed: readingSpeed, onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+            readNote({ note, mode, editor, speed: readingSpeed, onReadingChange: setIsReading });
           }
         }}
         onChangeReadingSpeed={() => {
           const nextSpeed = readingSpeed === 1 ? 2 : readingSpeed === 2 ? 3 : 1;
           setReadingSpeed(nextSpeed);
           if (isReading) {
-            stopReading({ onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+            stopReading({ onReadingChange: setIsReading });
             setTimeout(() => {
-              readNote({ note, mode, editor, speed: nextSpeed, onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
+              readNote({ note, mode, editor, speed: nextSpeed, onReadingChange: setIsReading });
             }, 100);
           }
         }}
-        onGlobalPlayPause={handleGlobalPlayPause}
         onUndo={() => editor?.chain().focus().undo().run()}
         onRedo={() => editor?.chain().focus().redo().run()}
         canUndo={editor?.can().undo() ?? false}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo, Image as ImageIcon, MicOff } from 'lucide-react';
+import { Menu, Type, Code, Download, FileType2, FileCode2, FileText, Music, Pause, Speech, Undo, Redo, Image as ImageIcon, MicOff, Waves } from 'lucide-react';
 import { Note } from '../types';
 
 interface EditorTopBarProps {
@@ -16,10 +16,9 @@ interface EditorTopBarProps {
   onExportImage: () => void;
   isReading?: boolean;
   readingSpeed?: number;
-  isGlobalPlaying?: boolean;
   onToggleReading?: () => void;
   onChangeReadingSpeed?: () => void;
-  onGlobalPlayPause?: () => void;
+  onToggleNoxFlowMini?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -40,10 +39,9 @@ export function EditorTopBar({
   onExportImage,
   isReading = false,
   readingSpeed = 1,
-  isGlobalPlaying = false,
   onToggleReading,
   onChangeReadingSpeed,
-  onGlobalPlayPause,
+  onToggleNoxFlowMini,
   onUndo,
   onRedo,
   canUndo = false,
@@ -132,17 +130,13 @@ export function EditorTopBar({
                 </button>
               </div>
             )}
-            {onGlobalPlayPause && (
+            {onToggleNoxFlowMini && (
               <button
-                onClick={onGlobalPlayPause}
-                className={`p-2 rounded-lg transition-colors ${
-                  isGlobalPlaying 
-                    ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
-                }`}
-                title={isGlobalPlaying ? "Pausar música/foco" : "Tocar música/foco"}
+                onClick={onToggleNoxFlowMini}
+                className="p-2 rounded-lg transition-colors text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10"
+                title="Nox Flow"
               >
-                {isGlobalPlaying ? <Pause className="w-5 h-5" /> : <Music className="w-5 h-5" />}
+                <Waves className="w-5 h-5" />
               </button>
             )}
 

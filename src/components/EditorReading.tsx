@@ -1,11 +1,9 @@
 export interface ReadingState {
   isReading: boolean;
-  isGlobalPlaying: boolean;
 }
 
 export interface ReadingHandlers {
   onReadingChange: (isReading: boolean) => void;
-  onGlobalPlayingChange: (isPlaying: boolean) => void;
 }
 
 export function readNote({
@@ -13,15 +11,13 @@ export function readNote({
   mode,
   editor,
   speed = 1,
-  onReadingChange,
-  onGlobalPlayingChange
+  onReadingChange
 }: {
   note: any;
   mode: 'visual' | 'markdown';
   editor?: any;
   speed?: number;
   onReadingChange: (isReading: boolean) => void;
-  onGlobalPlayingChange: (isPlaying: boolean) => void;
 }) {
   if (!note) return;
   
@@ -45,7 +41,6 @@ export function readNote({
     
     utterance.onstart = () => {
       onReadingChange(true);
-      onGlobalPlayingChange(false); // Pausar rádio se estiver tocando
     };
     utterance.onend = () => onReadingChange(false);
     utterance.onerror = () => onReadingChange(false);
@@ -57,15 +52,12 @@ export function readNote({
 }
 
 export function stopReading({
-  onReadingChange,
-  onGlobalPlayingChange
+  onReadingChange
 }: {
   onReadingChange: (isReading: boolean) => void;
-  onGlobalPlayingChange: (isPlaying: boolean) => void;
 }) {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     onReadingChange(false);
-    onGlobalPlayingChange(false);
   }
 }

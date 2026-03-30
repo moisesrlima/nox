@@ -2,10 +2,13 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { NoxFlowProvider } from './contexts/NoxFlowContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <NoxFlowProvider>
+      <App />
+    </NoxFlowProvider>
   </StrictMode>,
 );
 

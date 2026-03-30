@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note, Folder, THEMES } from '../types';
-import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText, Layout, RefreshCcw } from 'lucide-react';
+import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText, Layout, RefreshCcw, Waves } from 'lucide-react';
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
 import { GoogleDriveSync } from './GoogleDriveSync';
@@ -27,6 +27,7 @@ interface SidebarProps {
   onResetData: () => void;
   onOpenThemes: () => void;
   onOpenGallery: () => void;
+  onOpenNoxFlow: () => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   currentThemeId: string;
@@ -51,6 +52,7 @@ export function Sidebar({
   onResetData,
   onOpenThemes,
   onOpenGallery,
+  onOpenNoxFlow,
   isOpen,
   setIsOpen,
   currentThemeId,
@@ -59,18 +61,7 @@ export function Sidebar({
   const [openSection, setOpenSection] = useState<string | null>('folders');
   const [previewTemplate, setPreviewTemplate] = useState<{ title: string; description: string; content: string } | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentStation, setCurrentStation] = useState(0);
-  const [volume, setVolume] = useState(0.5);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Pomodoro states
-  const [pomodoroTime, setPomodoroTime] = useState(25 * 60); // 25 minutes in seconds
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [isBreak, setIsBreak] = useState(false);
-  const [sessions, setSessions] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Folder states
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
@@ -83,9 +74,8 @@ export function Sidebar({
 
   const isFoldersOpen = openSection === 'folders';
   const isTemplatesOpen = openSection === 'templates';
-  const isPomodoroOpen = openSection === 'pomodoro';
-  const isRadioOpen = openSection === 'radio';
   const isSettingsOpen = openSection === 'settings';
+  const isNoxFlowOpen = openSection === 'noxflow';
 
   const toggleFolder = (id: string) => {
     setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
@@ -117,166 +107,6 @@ export function Sidebar({
     const noteId = e.dataTransfer.getData('noteId');
     if (noteId) {
       onMoveNoteToFolder(noteId, folderId);
-    }
-  };
-
-  // Global play/pause state for header button
-  const [isGlobalPlaying, setIsGlobalPlaying] = useState(false);
-
-  const radioStations = [
-    { name: 'Lo-Fi Fire FM', url: 'https://stream.laut.fm/lo-firefm' },
-    { name: 'Radio Record Lo-Fi', url: 'https://online.radiorecord.com.ua/lofi' },
-    { name: 'Lo-Fi Radio', url: 'https://live.lofiradio.ru/mp3_128' },
-    { name: 'Zen Lo-Fi', url: 'https://stream.zeno.fm/z65dsrrsrg0uv' },
-  ];
-
-  // Listen for radio control events from header
-  useEffect(() => {
-    const handleRadioControl = (event: CustomEvent) => {
-      if (event.detail.action === 'play') {
-        if (!isPlaying) {
-          handlePlayPause();
-        }
-        setIsGlobalPlaying(true);
-      } else if (event.detail.action === 'pause') {
-        if (isPlaying) {
-          handlePlayPause();
-        }
-        setIsGlobalPlaying(false);
-      }
-    };
-
-    window.addEventListener('radio-control', handleRadioControl as EventListener);
-    return () => {
-      window.removeEventListener('radio-control', handleRadioControl as EventListener);
-    };
-  }, [isPlaying]);
-
-  const handlePlayPause = () => {
-    if (isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-      setIsGlobalPlaying(false);
-    } else {
-      if (audioRef.current) {
-        audioRef.current.src = radioStations[currentStation].url;
-        audioRef.current.volume = volume;
-        audioRef.current.play().catch(console.error);
-        setIsPlaying(true);
-        setIsGlobalPlaying(true);
-      }
-    }
-  };
-
-  const handleStationChange = (direction: 'next' | 'prev') => {
-    const newStation = direction === 'next' 
-      ? (currentStation + 1) % radioStations.length
-      : (currentStation - 1 + radioStations.length) % radioStations.length;
-    
-    setCurrentStation(newStation);
-    
-    if (isPlaying && audioRef.current) {
-      audioRef.current.src = radioStations[newStation].url;
-      audioRef.current.volume = volume;
-      audioRef.current.play().catch(console.error);
-    }
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
-  };
-
-  // Pomodoro functions
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const startPomodoro = () => {
-    setIsTimerRunning(true);
-    setIsBreak(false);
-    setPomodoroTime(25 * 60);
-  };
-
-  const startBreak = () => {
-    setIsTimerRunning(true);
-    setIsBreak(true);
-    setPomodoroTime(5 * 60); // 5 minute break
-  };
-
-  const pauseTimer = () => {
-    setIsTimerRunning(false);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  const resetTimer = () => {
-    setIsTimerRunning(false);
-    setIsBreak(false);
-    setPomodoroTime(25 * 60);
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  // Timer effect
-  React.useEffect(() => {
-    if (isTimerRunning && pomodoroTime > 0) {
-      intervalRef.current = setInterval(() => {
-        setPomodoroTime(time => {
-          if (time <= 1) {
-            setIsTimerRunning(false);
-            if (!isBreak) {
-              setSessions(prev => prev + 1);
-            }
-            return 0;
-          }
-          return time - 1;
-        });
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isTimerRunning, pomodoroTime, isBreak]);
-
-  // Global play/pause function
-  const handleGlobalPlayPause = () => {
-    if (isGlobalPlaying) {
-      // Pause both radio and pomodoro if they're running
-      if (isPlaying) {
-        audioRef.current?.pause();
-        setIsPlaying(false);
-      }
-      if (isTimerRunning) {
-        pauseTimer();
-      }
-      setIsGlobalPlaying(false);
-    } else {
-      // Play radio if it's open, otherwise start pomodoro
-      if (isRadioOpen && audioRef.current) {
-        audioRef.current.play().catch(console.error);
-        setIsPlaying(true);
-      } else if (isPomodoroOpen && !isTimerRunning) {
-        startPomodoro();
-      }
-      setIsGlobalPlaying(true);
     }
   };
 
@@ -385,84 +215,63 @@ export function Sidebar({
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
-          {/* Galeria de Temas */}
-          <div>
-            <div className="flex items-center justify-between px-2 mb-2">
-              <button 
-                onClick={() => toggleSection('themes')}
-                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
-              >
-                <ChevronRight className={`w-3 h-3 transition-transform ${openSection === 'themes' ? 'rotate-90' : ''}`} />
-                Galeria de Temas
-              </button>
-              <Palette className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-            </div>
-
-            {openSection === 'themes' && (
-              <div className="space-y-1">
-                <div className="grid grid-cols-5 gap-1 px-2 mb-2">
-                  {THEMES.slice(0, 5).map(theme => (
-                    <button
-                      key={theme.id}
-                      onClick={() => onOpenThemes()}
-                      className={`w-full aspect-square rounded-full border-2 transition-all hover:scale-110 ${currentThemeId === theme.id ? 'border-[var(--accent-primary)]' : 'border-transparent'}`}
-                      style={{ backgroundColor: theme.colors.accent }}
-                      title={theme.name}
-                    />
-                  ))}
-                </div>
-                
-                <button
-                  onClick={onOpenThemes}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
-                >
-                  <Palette size={16} />
-                  Ver Todos os Temas
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Galeria de Templates */}
-          <div>
-            <div className="flex items-center justify-between px-2 mb-2">
-              <button 
-                onClick={() => toggleSection('templates')}
-                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
-              >
-                <ChevronRight className={`w-3 h-3 transition-transform ${isTemplatesOpen ? 'rotate-90' : ''}`} />
-                Galeria de Templates
-              </button>
-              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-            </div>
-
-            {isTemplatesOpen && (
-              <div className="space-y-1">
-                {TEMPLATES.slice(0, 5).map(template => (
+          {/* Uncategorized Notes Section */}
+          <div 
+            onDragOver={onDragOver}
+            onDrop={(e) => onDrop(e, undefined)}
+            className="space-y-1"
+          >
+            <h4 className="px-2 mb-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Notas</h4>
+            {filteredNotes.filter(n => !n.folderId).length === 0 ? (
+              <div className="text-center text-[var(--text-muted)] text-xs py-8 px-4 bg-[var(--bg-surface)]/30 rounded-2xl border border-dashed border-[var(--border-color)]">
+                <p className="mb-4">{searchQuery ? 'Nenhuma nota encontrada.' : 'Sua lista de notas está vazia.'}</p>
+                {!searchQuery && (
                   <button
-                    key={template.id}
-                    onClick={() => {
-                      setPreviewTemplate(template);
-                      setIsPreviewOpen(true);
-                    }}
-                    className="w-full text-left p-2 rounded-lg hover:bg-[var(--bg-hover)] transition-all group border border-transparent hover:border-[var(--border-color)]"
+                    onClick={onOpenGallery}
+                    className="w-full flex items-center justify-center gap-2 p-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl font-bold hover:scale-105 transition-all shadow-md shadow-[var(--accent-primary)]/20"
                   >
-                    <div className="text-xs font-bold text-[var(--text-primary)] mb-0.5 flex items-center gap-2">
-                      <FileText size={12} className="text-[var(--text-muted)]" />
-                      {template.title}
-                    </div>
-                    <div className="text-[10px] text-[var(--text-muted)] line-clamp-1 pl-5">{template.description}</div>
+                    <Sparkles size={14} />
+                    Usar um Template
                   </button>
-                ))}
-                
-                <button
-                  onClick={onOpenGallery}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 mt-2 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
-                >
-                  <Layout size={16} />
-                  Ver Todos os Templates
-                </button>
+                )}
               </div>
+            ) : (
+              filteredNotes
+                .filter(n => !n.folderId)
+                .map((note) => (
+                  <div
+                    key={note.id}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, note.id)}
+                    onClick={() => onSelectNote(note.id)}
+                    className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                      activeNoteId === note.id
+                        ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-sm'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/50 hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0 pr-2">
+                      <h3 className="text-sm font-medium truncate">
+                        {note.title || 'Sem título'}
+                      </h3>
+                      <p className="text-xs text-[var(--text-muted)] truncate mt-1">
+                        {format(note.updatedAt, "d 'de' MMM, yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Tem certeza que deseja excluir esta nota?')) {
+                          onDeleteNote(note.id);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-[var(--bg-surface)] rounded-md transition-all"
+                      title="Excluir"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))
             )}
           </div>
 
@@ -574,216 +383,115 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Uncategorized Notes Section */}
-          <div 
-            onDragOver={onDragOver}
-            onDrop={(e) => onDrop(e, undefined)}
-            className="space-y-1"
-          >
-            <h4 className="px-2 mb-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Notas</h4>
-            {filteredNotes.filter(n => !n.folderId).length === 0 ? (
-              <div className="text-center text-[var(--text-muted)] text-xs py-8 px-4 bg-[var(--bg-surface)]/30 rounded-2xl border border-dashed border-[var(--border-color)]">
-                <p className="mb-4">{searchQuery ? 'Nenhuma nota encontrada.' : 'Sua lista de notas está vazia.'}</p>
-                {!searchQuery && (
-                  <button
-                    onClick={onOpenGallery}
-                    className="w-full flex items-center justify-center gap-2 p-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl font-bold hover:scale-105 transition-all shadow-md shadow-[var(--accent-primary)]/20"
-                  >
-                    <Sparkles size={14} />
-                    Usar um Template
-                  </button>
-                )}
-              </div>
-            ) : (
-              filteredNotes
-                .filter(n => !n.folderId)
-                .map((note) => (
-                  <div
-                    key={note.id}
-                    draggable
-                    onDragStart={(e) => onDragStart(e, note.id)}
-                    onClick={() => onSelectNote(note.id)}
-                    className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
-                      activeNoteId === note.id
-                        ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] shadow-sm'
-                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/50 hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0 pr-2">
-                      <h3 className="text-sm font-medium truncate">
-                        {note.title || 'Sem título'}
-                      </h3>
-                      <p className="text-xs text-[var(--text-muted)] truncate mt-1">
-                        {format(note.updatedAt, "d 'de' MMM, yyyy", { locale: ptBR })}
-                      </p>
-                    </div>
+          {/* Galeria de Temas */}
+          <div>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <button 
+                onClick={() => toggleSection('themes')}
+                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
+              >
+                <ChevronRight className={`w-3 h-3 transition-transform ${openSection === 'themes' ? 'rotate-90' : ''}`} />
+                Galeria de Temas
+              </button>
+              <Palette className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            </div>
+
+            {openSection === 'themes' && (
+              <div className="space-y-1">
+                <div className="grid grid-cols-5 gap-1 px-2 mb-2">
+                  {THEMES.slice(0, 5).map(theme => (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm('Tem certeza que deseja excluir esta nota?')) {
-                          onDeleteNote(note.id);
-                        }
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-[var(--bg-surface)] rounded-md transition-all"
-                      title="Excluir"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))
+                      key={theme.id}
+                      onClick={() => onOpenThemes()}
+                      className={`w-full aspect-square rounded-full border-2 transition-all hover:scale-110 ${currentThemeId === theme.id ? 'border-[var(--accent-primary)]' : 'border-transparent'}`}
+                      style={{ backgroundColor: theme.colors.accent }}
+                      title={theme.name}
+                    />
+                  ))}
+                </div>
+                
+                <button
+                  onClick={onOpenThemes}
+                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
+                >
+                  <Palette size={16} />
+                  Ver Todos os Temas
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Galeria de Templates */}
+          <div>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <button 
+                onClick={() => toggleSection('templates')}
+                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
+              >
+                <ChevronRight className={`w-3 h-3 transition-transform ${isTemplatesOpen ? 'rotate-90' : ''}`} />
+                Galeria de Templates
+              </button>
+              <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            </div>
+
+            {isTemplatesOpen && (
+              <div className="space-y-1">
+                {TEMPLATES.slice(0, 5).map(template => (
+                  <button
+                    key={template.id}
+                    onClick={() => {
+                      setPreviewTemplate(template);
+                      setIsPreviewOpen(true);
+                    }}
+                    className="w-full text-left p-2 rounded-lg hover:bg-[var(--bg-hover)] transition-all group border border-transparent hover:border-[var(--border-color)]"
+                  >
+                    <div className="text-xs font-bold text-[var(--text-primary)] mb-0.5 flex items-center gap-2">
+                      <FileText size={12} className="text-[var(--text-muted)]" />
+                      {template.title}
+                    </div>
+                    <div className="text-[10px] text-[var(--text-muted)] line-clamp-1 pl-5">{template.description}</div>
+                  </button>
+                ))}
+                
+                <button
+                  onClick={onOpenGallery}
+                  className="w-full flex items-center justify-center gap-2 p-2.5 mt-2 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
+                >
+                  <Layout size={16} />
+                  Ver Todos os Templates
+                </button>
+              </div>
             )}
           </div>
         </div>
 
         <div className="p-4 border-t border-border space-y-3">
-          {/* Pomodoro Timer */}
+          {/* Nox Flow Section */}
           <div>
-            <button
-              onClick={() => toggleSection('pomodoro')}
-              className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
-                isPomodoroOpen 
-                  ? 'bg-accent text-accent-contrast font-medium' 
-                  : 'text-text-secondary hover:text-text-primary hover:bg-hover'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Foco & Pausa
-              </div>
-              <ChevronUp
-                className={`w-4 h-4 transition-transform ${
-                  isPomodoroOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isPomodoroOpen && (
-              <div className="mt-2 space-y-3 p-3 bg-surface/50 rounded-lg border border-border/50">
-                <div className="text-center">
-                  <div className={`text-3xl font-mono font-bold ${isBreak ? 'text-emerald-500' : 'text-text-primary'}`}>
-                    {formatTime(pomodoroTime)}
-                  </div>
-                  <div className="text-xs text-text-secondary mt-1">
-                    {isBreak ? 'Pausa' : 'Foco'} • Sessões: {sessions}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!isTimerRunning ? (
-                    <button
-                      onClick={isBreak ? startBreak : startPomodoro}
-                      className="flex-1 p-2 bg-accent text-accent-contrast rounded-lg hover:bg-accent/90 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Play className="w-4 h-4" />
-                      {isBreak ? 'Pausa' : 'Foco'}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={pauseTimer}
-                      className="flex-1 p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Pause className="w-4 h-4" />
-                      Pausar
-                    </button>
-                  )}
-                  <button
-                    onClick={resetTimer}
-                    className="p-2 text-text-secondary bg-surface hover:bg-hover rounded-lg transition-colors"
-                    title="Resetar"
-                  >
-                    <Coffee className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setIsBreak(false);
-                      setPomodoroTime(25 * 60);
-                      pauseTimer();
-                    }}
-                    className={`flex-1 p-2 text-xs rounded-lg transition-colors ${
-                      !isBreak ? 'bg-accent text-accent-contrast' : 'bg-surface hover:bg-hover text-text-secondary'
-                    }`}
-                  >
-                    25min Foco
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsBreak(true);
-                      setPomodoroTime(5 * 60);
-                      pauseTimer();
-                    }}
-                    className={`flex-1 p-2 text-xs rounded-lg transition-colors ${
-                      isBreak ? 'bg-emerald-500 text-white' : 'bg-surface hover:bg-hover text-text-secondary'
-                    }`}
-                  >
-                    5min Pausa
-                  </button>
-                </div>
+            <div className="flex items-center justify-between px-2 mb-2">
+              <button 
+                onClick={() => toggleSection('noxflow')}
+                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
+              >
+                <ChevronRight className={`w-3 h-3 transition-transform ${isNoxFlowOpen ? 'rotate-90' : ''}`} />
+                Nox Flow
+              </button>
+              <Waves className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            </div>
+
+            {isNoxFlowOpen && (
+              <div className="space-y-1">
+                <button
+                  onClick={onOpenNoxFlow}
+                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
+                >
+                  <Waves size={16} />
+                  Abrir Nox Flow
+                </button>
               </div>
             )}
           </div>
 
-          {/* Radio Player */}
-          <div>
-            <button
-              onClick={() => toggleSection('radio')}
-              className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
-                isRadioOpen 
-                  ? 'bg-accent text-accent-contrast font-medium' 
-                  : 'text-text-secondary hover:text-text-primary hover:bg-hover'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Radio className="w-4 h-4" />
-                Rádio Lo-Fi
-              </div>
-              <ChevronUp
-                className={`w-4 h-4 transition-transform ${
-                  isRadioOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isRadioOpen && (
-              <div className="mt-2 space-y-3 p-3 bg-surface/50 rounded-lg border border-border/50">
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => handleStationChange('prev')}
-                    className="p-1 text-text-secondary hover:text-text-primary hover:bg-hover rounded-full transition-colors"
-                  >
-                    <ChevronUp className="w-4 h-4 rotate-180" />
-                  </button>
-                  <span className="text-sm font-medium text-text-primary text-center flex-1 px-2 truncate">
-                    {radioStations[currentStation].name}
-                  </span>
-                  <button
-                    onClick={() => handleStationChange('next')}
-                    className="p-1 text-text-secondary hover:text-text-primary hover:bg-hover rounded-full transition-colors"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={handlePlayPause}
-                    className="p-2 bg-accent text-accent-contrast rounded-lg hover:bg-accent/90 transition-colors"
-                  >
-                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </button>
-                  <div className="flex items-center gap-2 flex-1">
-                    <Volume2 className="w-4 h-4 text-text-secondary" />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={volume}
-                      onChange={handleVolumeChange}
-                      className="w-full h-1.5 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-accent"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
           <button
             onClick={() => toggleSection('settings')}
             className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${
@@ -947,7 +655,6 @@ export function Sidebar({
           onClick={() => setIsOpen(false)}
         />
       )}
-      <audio ref={audioRef} />
 
       <TemplatePreviewModal
         isOpen={isPreviewOpen}

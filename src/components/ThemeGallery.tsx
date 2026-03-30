@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, Search, Palette, Check, Moon, Sun } from 'lucide-react';
 import { THEMES, ThemeId } from '../types';
+import { AdUnit } from './AdUnit';
 
 interface ThemeGalleryProps {
   currentThemeId: ThemeId;
@@ -91,61 +92,72 @@ export function ThemeGallery({ currentThemeId, onSelectTheme, onClose }: ThemeGa
           {filteredThemes.map((theme, index) => {
             const isSelected = currentThemeId === theme.id;
             return (
-              <motion.div
-                key={theme.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => onSelectTheme(theme.id)}
-                className={`group relative cursor-pointer rounded-2xl overflow-hidden border-2 transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                  isSelected 
-                    ? 'border-[var(--accent-primary)] shadow-xl shadow-[var(--accent-primary)]/20' 
-                    : 'border-[var(--border-color)] hover:border-[var(--accent-primary)]/50'
-                }`}
-                style={{ backgroundColor: theme.colors.primary }}
-              >
-                {/* Theme Preview Card */}
-                <div className="p-5 flex flex-col h-full min-h-[180px]">
-                  <div className="flex items-start justify-between mb-4">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-                      style={{ backgroundColor: theme.colors.accent, color: '#fff' }}
-                    >
-                      <Palette size={20} />
-                    </div>
-                    {isSelected && (
-                      <div className="bg-[var(--accent-primary)] text-[var(--accent-contrast)] p-1 rounded-full">
-                        <Check size={14} />
-                      </div>
-                    )}
-                  </div>
-
-                  <h3 
-                    className="text-lg font-bold mb-1"
-                    style={{ color: theme.colors.textPrimary }}
+              <React.Fragment key={theme.id}>
+                {index === 6 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="col-span-1"
                   >
-                    {theme.name}
-                  </h3>
-                  <p 
-                    className="text-xs line-clamp-2 opacity-70"
-                    style={{ color: theme.colors.textSecondary }}
-                  >
-                    {theme.description}
-                  </p>
-
-                  {/* Color Swatches */}
-                  <div className="mt-auto pt-4 flex gap-1.5">
-                    <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.primary }} />
-                    <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.surface }} />
-                    <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.accent }} />
-                  </div>
-                </div>
-
-                {/* Selection Overlay */}
-                {isSelected && (
-                  <div className="absolute inset-0 bg-[var(--accent-primary)]/5 pointer-events-none" />
+                    <AdUnit slot="THEME_GALLERY_SLOT" />
+                  </motion.div>
                 )}
-              </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  onClick={() => onSelectTheme(theme.id)}
+                  className={`group relative cursor-pointer rounded-2xl overflow-hidden border-2 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                    isSelected 
+                      ? 'border-[var(--accent-primary)] shadow-xl shadow-[var(--accent-primary)]/20' 
+                      : 'border-[var(--border-color)] hover:border-[var(--accent-primary)]/50'
+                  }`}
+                  style={{ backgroundColor: theme.colors.primary }}
+                >
+                  {/* Theme Preview Card */}
+                  <div className="p-5 flex flex-col h-full min-h-[180px]">
+                    <div className="flex items-start justify-between mb-4">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                        style={{ backgroundColor: theme.colors.accent, color: '#fff' }}
+                      >
+                        <Palette size={20} />
+                      </div>
+                      {isSelected && (
+                        <div className="bg-[var(--accent-primary)] text-[var(--accent-contrast)] p-1 rounded-full">
+                          <Check size={14} />
+                        </div>
+                      )}
+                    </div>
+
+                    <h3 
+                      className="text-lg font-bold mb-1"
+                      style={{ color: theme.colors.textPrimary }}
+                    >
+                      {theme.name}
+                    </h3>
+                    <p 
+                      className="text-xs line-clamp-2 opacity-70"
+                      style={{ color: theme.colors.textSecondary }}
+                    >
+                      {theme.description}
+                    </p>
+
+                    {/* Color Swatches */}
+                    <div className="mt-auto pt-4 flex gap-1.5">
+                      <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.primary }} />
+                      <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.surface }} />
+                      <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.colors.accent }} />
+                    </div>
+                  </div>
+
+                  {/* Selection Overlay */}
+                  {isSelected && (
+                    <div className="absolute inset-0 bg-[var(--accent-primary)]/5 pointer-events-none" />
+                  )}
+                </motion.div>
+              </React.Fragment>
             );
           })}
         </div>

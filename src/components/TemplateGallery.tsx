@@ -4,6 +4,7 @@ import { ArrowLeft, Search, Plus, Layout, User, GraduationCap, Briefcase, Rocket
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { Note } from '../types';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
+import { AdUnit } from './AdUnit';
 
 interface TemplateGalleryProps {
   onClose: () => void;
@@ -91,46 +92,57 @@ export function TemplateGallery({ onClose, onSelectTemplate }: TemplateGalleryPr
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {filteredTemplates.map((template, index) => (
-            <motion.div
-              key={template.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="group bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-[var(--accent-primary)]/5 hover:border-[var(--accent-primary)]/30 transition-all flex flex-col"
-            >
-              <div className="p-5 flex-1">
-                <div className="flex items-start justify-between mb-3">
-                  <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider rounded">
-                    {template.category}
-                  </span>
+            <React.Fragment key={template.id}>
+              {index === 6 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="col-span-1"
+                >
+                  <AdUnit slot="TEMPLATE_GALLERY_SLOT" />
+                </motion.div>
+              )}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="group bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-[var(--accent-primary)]/5 hover:border-[var(--accent-primary)]/30 transition-all flex flex-col"
+              >
+                <div className="p-5 flex-1">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider rounded">
+                      {template.category}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-[var(--text-primary)] mb-2 group-hover:text-[var(--accent-primary)] transition-colors">
+                    {template.title}
+                  </h3>
+                  <p className="text-sm text-[var(--text-secondary)] line-clamp-3 leading-relaxed">
+                    {template.description}
+                  </p>
                 </div>
-                <h3 className="text-base font-bold text-[var(--text-primary)] mb-2 group-hover:text-[var(--accent-primary)] transition-colors">
-                  {template.title}
-                </h3>
-                <p className="text-sm text-[var(--text-secondary)] line-clamp-3 leading-relaxed">
-                  {template.description}
-                </p>
-              </div>
-              <div className="p-4 bg-[var(--bg-hover)]/30 border-t border-[var(--border-color)] flex items-center justify-between gap-2">
-                <button
-                  onClick={() => {
-                    setPreviewTemplate(template);
-                    setIsPreviewOpen(true);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded-xl text-sm font-bold hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
-                >
-                  <Layout size={14} />
-                  Visualizar
-                </button>
-                <button
-                  onClick={() => handleSelect(template.id)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl text-sm font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-[var(--accent-primary)]/20"
-                >
-                  <Plus size={14} />
-                  Usar
-                </button>
-              </div>
-            </motion.div>
+                <div className="p-4 bg-[var(--bg-hover)]/30 border-t border-[var(--border-color)] flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => {
+                      setPreviewTemplate(template);
+                      setIsPreviewOpen(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded-xl text-sm font-bold hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all"
+                  >
+                    <Layout size={14} />
+                    Visualizar
+                  </button>
+                  <button
+                    onClick={() => handleSelect(template.id)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl text-sm font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-[var(--accent-primary)]/20"
+                  >
+                    <Plus size={14} />
+                    Usar
+                  </button>
+                </div>
+              </motion.div>
+            </React.Fragment>
           ))}
         </div>
 
