@@ -5,14 +5,17 @@ import { THEMES, ThemeId } from '../types';
 import { AdUnit } from './AdUnit';
 
 interface ThemeGalleryProps {
+  isOpen: boolean;
   currentThemeId: ThemeId;
   onSelectTheme: (id: ThemeId) => void;
   onClose: () => void;
 }
 
-export function ThemeGallery({ currentThemeId, onSelectTheme, onClose }: ThemeGalleryProps) {
+export function ThemeGallery({ isOpen, currentThemeId, onSelectTheme, onClose }: ThemeGalleryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'dark' | 'light'>('all');
+
+  if (!isOpen) return null;
 
   const filteredThemes = THEMES.filter(theme => {
     const matchesSearch = theme.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

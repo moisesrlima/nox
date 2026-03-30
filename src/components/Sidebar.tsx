@@ -157,6 +157,13 @@ export function Sidebar({
     }
   };
 
+  const handleLogoClick = () => {
+    if (notes.length > 0) {
+      const mostRecentNote = [...notes].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+      onSelectNote(mostRecentNote.id);
+    }
+  };
+
   const checkApiHealth = async () => {
     console.log('Checking API health...');
     try {
@@ -186,7 +193,10 @@ export function Sidebar({
         } md:translate-x-0`}
       >
         <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
-          <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight flex items-center gap-2">
+          <h1 
+            onClick={handleLogoClick}
+            className="text-xl font-bold text-[var(--text-primary)] tracking-tight flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <img src="/icon.svg" alt="NoxNote Logo" className="w-6 h-6 rounded-md" />
             NoxNote
           </h1>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNoxFlow } from '../contexts/NoxFlowContext';
-import { Play, Pause, Volume2, Radio, Clock, Coffee, Bell, Timer, Hourglass, ChevronUp, ChevronDown } from 'lucide-react';
+import { Play, Pause, Volume2, Radio, Clock, Coffee, Bell, Timer, Hourglass, ChevronUp, ChevronDown, X } from 'lucide-react';
 
 export function NoxFlow({ onClose }: { onClose: () => void }) {
   const {
@@ -8,7 +8,8 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
     pomodoroTime, setPomodoroTime, isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
     alarmTime, setAlarmTime, isAlarmActive, toggleAlarm,
     stopwatchTime, isStopwatchRunning, startStopwatch, pauseStopwatch, resetStopwatch,
-    countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown
+    countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown,
+    isReading, readingSpeed, setReadingSpeed, startReading, stopReading, pauseReading, resumeReading
   } = useNoxFlow();
 
   const formatTime = (seconds: number) => {
@@ -193,6 +194,70 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
                 <button onClick={pauseCountdown} className="flex-1 py-2 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 transition-colors">Pausar</button>
               )}
               <button onClick={resetCountdown} className="px-4 py-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors">Zerar</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Reading Section */}
+        <div className="bg-[var(--bg-surface)] p-8 rounded-2xl border border-[var(--border-color)] shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-semibold text-[var(--text-primary)] flex items-center gap-3">
+              <Volume2 className="w-6 h-6 text-[var(--accent-primary)]" />
+              Ler em Voz Alta
+            </h2>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-[var(--text-secondary)] font-medium">Velocidade de Leitura</span>
+              <div className="flex bg-[var(--bg-primary)] p-1 rounded-xl border border-[var(--border-color)]">
+                {[1, 1.25, 1.5, 1.75, 2].map(speed => (
+                  <button 
+                    key={speed}
+                    onClick={() => setReadingSpeed(speed)}
+                    className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${readingSpeed === speed ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+                  >
+                    {speed}x
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center py-12 bg-[var(--bg-primary)] rounded-3xl border border-dashed border-[var(--border-color)]">
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 transition-all duration-500 ${isReading ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)] scale-110 shadow-xl shadow-[var(--accent-primary)]/20 animate-pulse' : 'bg-[var(--bg-surface)] text-[var(--text-muted)]'}`}>
+              <Volume2 className="w-12 h-12" />
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+              {isReading ? 'Lendo sua nota agora...' : 'Pronto para ler sua nota'}
+            </h3>
+            <p className="text-[var(--text-secondary)] text-center max-w-md mb-8">
+              {isReading 
+                ? 'Aproveite a leitura enquanto você foca em outras tarefas ou apenas relaxa.' 
+                : 'Selecione uma nota e clique no botão abaixo para que o Nox leia o conteúdo para você.'}
+            </p>
+            
+            <div className="flex gap-4">
+              {!isReading ? (
+                <button 
+                  onClick={() => startReading()}
+                  className="px-10 py-4 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-lg shadow-[var(--accent-primary)]/20 flex items-center gap-3"
+                >
+                  <Play className="w-6 h-6" /> Começar Leitura
+                </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => pauseReading()}
+                    className="px-10 py-4 bg-amber-500 text-white rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-lg shadow-amber-500/20 flex items-center gap-3"
+                  >
+                    <Pause className="w-6 h-6" /> Pausar
+                  </button>
+                  <button 
+                    onClick={() => stopReading()}
+                    className="px-10 py-4 bg-red-500 text-white rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-lg shadow-red-500/20 flex items-center gap-3"
+                  >
+                    Parar
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

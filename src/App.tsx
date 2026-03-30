@@ -176,7 +176,8 @@ export default function App() {
         <Suspense fallback={null}>
           {(isFirstVisit || showWelcomeModal) && (
             <WelcomeModal 
-              onAccept={() => {
+              isOpen={isFirstVisit || showWelcomeModal}
+              onClose={() => {
                 setIsFirstVisit(false);
                 setShowWelcomeModal(false);
               }} 
@@ -185,8 +186,9 @@ export default function App() {
 
           {showResetModal && (
             <ResetModal 
+              isOpen={showResetModal}
               onConfirm={handleResetData}
-              onCancel={() => setShowResetModal(false)}
+              onClose={() => setShowResetModal(false)}
             />
           )}
         </Suspense>
@@ -248,11 +250,13 @@ export default function App() {
               <NoxFlow onClose={() => setShowNoxFlow(false)} />
             ) : showTemplateGallery ? (
               <TemplateGallery
+                isOpen={showTemplateGallery}
                 onClose={() => setShowTemplateGallery(false)}
                 onSelectTemplate={handleImportTemplate}
               />
             ) : showThemeGallery ? (
               <ThemeGallery
+                isOpen={showThemeGallery}
                 currentThemeId={currentThemeId}
                 onSelectTheme={setCurrentThemeId}
                 onClose={() => setShowThemeGallery(false)}

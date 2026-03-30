@@ -8,7 +8,8 @@ export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOp
     pomodoroTime, setPomodoroTime, isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
     alarmTime, setAlarmTime, isAlarmActive, toggleAlarm,
     stopwatchTime, isStopwatchRunning, startStopwatch, pauseStopwatch, resetStopwatch,
-    countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown
+    countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown,
+    isReading, readingSpeed, setReadingSpeed, startReading, stopReading, pauseReading, resumeReading
   } = useNoxFlow();
 
   const [expandedWidget, setExpandedWidget] = useState<string | null>('radio');
@@ -199,6 +200,51 @@ export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOp
                   <button onClick={pauseCountdown} className="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors">Pausar</button>
                 )}
                 <button onClick={resetCountdown} className="px-3 py-1.5 bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg text-xs transition-colors">Zerar</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Reading Widget */}
+        <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+          <button onClick={() => toggleWidget('reading')} className="w-full flex items-center justify-between p-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-[var(--accent-primary)]" />
+              Ler em Voz Alta
+            </div>
+            {expandedWidget === 'reading' ? <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" /> : <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />}
+          </button>
+          {expandedWidget === 'reading' && (
+            <div className="p-3 pt-0 border-t border-[var(--border-color)]/50 mt-1">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Velocidade</span>
+                <div className="flex gap-1">
+                  {[1, 1.5, 2].map(speed => (
+                    <button 
+                      key={speed}
+                      onClick={() => setReadingSpeed(speed)}
+                      className={`px-2 py-0.5 text-[10px] rounded transition-colors ${readingSpeed === speed ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)]' : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'}`}
+                    >
+                      {speed}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {!isReading ? (
+                  <button onClick={() => startReading()} className="flex-1 py-1.5 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-lg text-xs font-bold hover:opacity-90 transition-colors flex items-center justify-center gap-1">
+                    <Play className="w-3 h-3" /> Iniciar Leitura
+                  </button>
+                ) : (
+                  <div className="flex-1 flex gap-2">
+                    <button onClick={() => pauseReading()} className="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors flex items-center justify-center gap-1">
+                      <Pause className="w-3 h-3" /> Pausar
+                    </button>
+                    <button onClick={() => stopReading()} className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors">
+                      Parar
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

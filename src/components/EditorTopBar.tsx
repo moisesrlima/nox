@@ -14,10 +14,6 @@ interface EditorTopBarProps {
   onExportHtml: () => void;
   onExportPdf: () => void;
   onExportImage: () => void;
-  isReading?: boolean;
-  readingSpeed?: number;
-  onToggleReading?: () => void;
-  onChangeReadingSpeed?: () => void;
   onToggleNoxFlowMini?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
@@ -37,10 +33,6 @@ export function EditorTopBar({
   onExportHtml,
   onExportPdf,
   onExportImage,
-  isReading = false,
-  readingSpeed = 1,
-  onToggleReading,
-  onChangeReadingSpeed,
   onToggleNoxFlowMini,
   onUndo,
   onRedo,
@@ -138,31 +130,6 @@ export function EditorTopBar({
               >
                 <Waves className="w-5 h-5" />
               </button>
-            )}
-
-            {onToggleReading && (
-              <div className="flex items-center bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)]">
-                <button
-                  onClick={onToggleReading}
-                  className={`p-1.5 rounded-md transition-colors ${
-                    isReading 
-                      ? 'text-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
-                  }`}
-                  title={isReading ? "Parar leitura" : "Ler nota em voz alta"}
-                >
-                  <Speech className="w-5 h-5" />
-                </button>
-                {onChangeReadingSpeed && (
-                  <button
-                    onClick={onChangeReadingSpeed}
-                    className="hidden sm:block px-2 py-1 text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors min-w-[28px]"
-                    title="Velocidade de leitura"
-                  >
-                    {readingSpeed}x
-                  </button>
-                )}
-              </div>
             )}
 
             <div className="relative group">

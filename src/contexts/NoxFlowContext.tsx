@@ -45,6 +45,17 @@ interface NoxFlowContextType {
   startCountdown: () => void;
   pauseCountdown: () => void;
   resetCountdown: () => void;
+
+  // Reading (TTS)
+  isReading: boolean;
+  readingSpeed: number;
+  setReadingSpeed: (speed: number) => void;
+  startReading: (text?: string) => void;
+  stopReading: () => void;
+  pauseReading: () => void;
+  resumeReading: () => void;
+  readingText: string;
+  setReadingText: (text: string) => void;
 }
 
 const NoxFlowContext = createContext<NoxFlowContextType | undefined>(undefined);
@@ -282,13 +293,75 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isCountdownRunning, countdownTime]);
 
+  // --- Reading (TTS) ---
+  const [isReading, setIsReading] = useState(false);
+  const [readingSpeed, setReadingSpeed] = useState(1);
+  const [readingText, setReadingText] = useState('');
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  const stopReading = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+    }
+  };
+
+  const startReading = (text?: string) => {
+    const textToRead = text || readingText;
+    if (!textToRead.trim()) {
+      alert('Não há texto para ler!');
+      return;
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(textToRead);
+      utterance.lang = 'pt-BR';
+      utterance.rate = readingSpeed;
+      utterance.pitch = 1;
+      
+      utterance.onstart = () => setIsReading(true);
+      utterance.onend = () => setIsReading(false);
+      utterance.onerror = () => setIsReading(false);
+      
+      utteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('Seu navegador não suporta leitura em voz alta.');
+    }
+  };
+
+  const pauseReading = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.pause();
+      setIsReading(false);
+    }
+  };
+
+  const resumeReading = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.resume();
+      setIsReading(true);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   return (
     <NoxFlowContext.Provider value={{
       isPlaying, currentStation, volume, togglePlayPause, changeStation, setVolume: handleSetVolume, radioStations,
       pomodoroTime, setPomodoroTime, isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
       alarmTime, setAlarmTime, isAlarmActive, toggleAlarm,
       stopwatchTime, isStopwatchRunning, startStopwatch, pauseStopwatch, resetStopwatch,
-      countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown
+      countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown,
+      isReading, readingSpeed, setReadingSpeed, startReading, stopReading, pauseReading, resumeReading, readingText, setReadingText
     }}>
       {children}
     </NoxFlowContext.Provider>

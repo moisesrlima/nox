@@ -27,7 +27,7 @@ import { getSlashCommands, CommandItem } from './EditorCommands';
 import { EditorTopBar } from './EditorTopBar';
 import { EditorBubbleMenu } from './EditorBubbleMenu';
 import { EditorSlashMenu } from './EditorSlashMenu';
-import { readNote, stopReading } from './EditorReading';
+import { useNoxFlow } from '../contexts/NoxFlowContext';
 
 interface EditorProps {
   note: Note | null;
@@ -43,13 +43,141 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
   const [slashMenu, setSlashMenu] = useState<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showCheatsheet, setShowCheatsheet] = useState(false);
-  const [isReading, setIsReading] = useState(false);
-  const [readingSpeed, setReadingSpeed] = useState<number>(1);
   const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isUpdatingFromNote = useRef(false);
   const recognitionRef = useRef<any>(null);
+
+  const { setReadingText } = useNoxFlow();
+
+  // Tiptap Editor
+  const editor = useEditor({
+    extensions: [
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'task-list',
+        },
+      }),
+      TaskItem.configure({
+        nested: true,
+        HTMLAttributes: {
+          class: 'task-item',
+        },
+      }),
+      Typography,
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        link: {
+          openOnClick: false,
+          HTMLAttributes: {
+            class: 'text-blue-500 underline cursor-pointer',
+          },
+        },
+        underline: {},
+      }),
+      Markdown.configure({
+        html: true,
+        tightLists: true,
+        bulletListMarker: '-',
+        linkify: true,
+        breaks: true,
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'rounded-lg max-w-full h-auto my-4 border border-[var(--border-color)]',
+        },
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse table-fixed w-full my-4',
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'bg-[var(--bg-surface)] border border-[var(--border-color)] p-2 font-bold text-left',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-[var(--border-color)] p-2 text-left',
+        },
+      }),
+      Placeholder.configure({
+        placeholder: ({ node }) => {
+          if (node.type.name === 'heading') {
+            return `Título ${node.attrs.level}`;
+          }
+          return 'Comece a escrever ou digite "/" para comandos...';
+        },
+      }),
+    ],
+    content: note?.content || '',
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] pb-32',
+      },
+      handleKeyDown: (view, event) => {
+        if (event.key === '/') {
+          const { from } = view.state.selection;
+          const coords = view.coordsAtPos(from);
+          setSlashMenu({ x: coords.left, y: coords.bottom, active: true });
+          setSelectedIndex(0);
+          return false;
+        }
+
+        if (slashMenuRef.current.active) {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setSelectedIndex(prev => (prev + 1) % commandsRef.current.length);
+            return true;
+          }
+          if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setSelectedIndex(prev => (prev - 1 + commandsRef.current.length) % commandsRef.current.length);
+            return true;
+          }
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            handleCommandSelect(commandsRef.current[selectedIndexRef.current].title);
+            return true;
+          }
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            setSlashMenu(prev => ({ ...prev, active: false }));
+            return true;
+          }
+        }
+        return false;
+      },
+    },
+    onUpdate: ({ editor }) => {
+      if (!isUpdatingFromNote.current) {
+        onUpdateNote(note!.id, { content: editor.getHTML(), updatedAt: Date.now() });
+      }
+    },
+    autofocus: autoFocus ? 'end' : false,
+  });
+
+  useEffect(() => {
+    if (note) {
+      const text = mode === 'visual' && editor 
+        ? editor.getText()
+        : note.content;
+      setReadingText(text);
+    }
+  }, [note?.id, note?.content, mode, editor, setReadingText]);
 
   const theme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
   const isDarkTheme = theme.isDark;
@@ -197,127 +325,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
       }
     };
   }, []);
-
-  // Tiptap Editor
-  const editor = useEditor({
-    extensions: [
-      TaskList.configure({
-        HTMLAttributes: {
-          class: 'task-list',
-        },
-      }),
-      TaskItem.configure({
-        nested: true,
-        HTMLAttributes: {
-          class: 'task-item',
-        },
-      }),
-      Typography,
-      StarterKit.configure({
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        orderedList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        link: {
-          openOnClick: false,
-          HTMLAttributes: {
-            class: 'text-blue-500 underline cursor-pointer',
-          },
-        },
-        underline: {},
-      }),
-      Markdown.configure({
-        html: true,
-        tightLists: true,
-        bulletListMarker: '-',
-        linkify: true,
-        breaks: true,
-        transformPastedText: true,
-        transformCopiedText: true,
-      }),
-      Image.configure({
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'rounded-xl border border-[var(--border-color)] shadow-sm max-w-full h-auto my-4',
-        },
-      }),
-      Table.configure({
-        resizable: true,
-      }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      Placeholder.configure({
-        placeholder: "Digite '/' para comandos...",
-      }),
-    ],
-    content: note?.content || '',
-    onUpdate: ({ editor }) => {
-      if (note && !isUpdatingFromNote.current) {
-        const markdown = (editor.storage as any).markdown.getMarkdown();
-        onUpdateNote(note.id, { content: markdown, updatedAt: Date.now() });
-      }
-    },
-    editorProps: {
-      attributes: {
-        class: `prose ${isDarkTheme ? 'prose-invert prose-zinc' : 'prose-slate'} max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-[var(--bg-surface)] prose-pre:border prose-pre:border-[var(--border-color)] prose-a:text-[var(--accent-primary)] hover:prose-a:opacity-80 prose-img:rounded-xl prose-img:border prose-img:border-[var(--border-color)]`,
-      },
-      handleKeyDown: (view, event) => {
-        if (event.key === '/') {
-          const { selection } = view.state;
-          const isAtStart = selection.$from.parentOffset === 0;
-          const textBefore = selection.$from.parent.textContent.slice(0, selection.$from.parentOffset);
-          const prevChar = textBefore.slice(-1);
-          const isAfterSpace = prevChar === ' ';
-
-          if (isAtStart || isAfterSpace) {
-            const { from } = selection;
-            const coords = view.coordsAtPos(from);
-            setSlashMenu({ x: coords.left, y: coords.bottom + 5, active: true });
-            setSelectedIndex(0);
-            return false;
-          }
-        }
-        
-        if (slashMenuRef.current.active) {
-          if (event.key === 'ArrowDown') {
-            setSelectedIndex(prev => (prev + 1) % commands.length);
-            return true;
-          }
-          if (event.key === 'ArrowUp') {
-            setSelectedIndex(prev => (prev - 1 + commands.length) % commands.length);
-            return true;
-          }
-          if (event.key === 'Enter') {
-            const cmd = commandsRef.current[selectedIndexRef.current];
-            handleCommandSelect(cmd.title);
-            return true;
-          }
-          if (event.key === 'Escape') {
-            setSlashMenu(prev => ({ ...prev, active: false }));
-            return true;
-          }
-          if (event.key.length === 1 || event.key === 'Backspace') {
-            setSlashMenu(prev => ({ ...prev, active: false }));
-          }
-        }
-        return false;
-      }
-    },
-  });
-
-  // Sync Tiptap when note changes
-  useEffect(() => {
-    if (note && editor && note.content !== (editor.storage as any).markdown.getMarkdown()) {
-      isUpdatingFromNote.current = true;
-      editor.commands.setContent(note.content);
-      isUpdatingFromNote.current = false;
-    }
-  }, [note?.id, editor]);
 
   const handleImageInsert = (isSlash: boolean = false) => {
     const choice = window.confirm('Deseja fazer upload de uma imagem do seu computador? (Clique em Cancelar para inserir via link)');
@@ -694,25 +701,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
         onExportHtml={exportHtml}
         onExportPdf={exportPdf}
         onExportImage={exportImage}
-        isReading={isReading}
-        readingSpeed={readingSpeed}
-        onToggleReading={() => {
-          if (isReading) {
-            stopReading({ onReadingChange: setIsReading });
-          } else {
-            readNote({ note, mode, editor, speed: readingSpeed, onReadingChange: setIsReading });
-          }
-        }}
-        onChangeReadingSpeed={() => {
-          const nextSpeed = readingSpeed === 1 ? 2 : readingSpeed === 2 ? 3 : 1;
-          setReadingSpeed(nextSpeed);
-          if (isReading) {
-            stopReading({ onReadingChange: setIsReading });
-            setTimeout(() => {
-              readNote({ note, mode, editor, speed: nextSpeed, onReadingChange: setIsReading });
-            }, 100);
-          }
-        }}
         onUndo={() => editor?.chain().focus().undo().run()}
         onRedo={() => editor?.chain().focus().redo().run()}
         canUndo={editor?.can().undo() ?? false}

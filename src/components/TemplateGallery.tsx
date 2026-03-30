@@ -7,6 +7,7 @@ import { TemplatePreviewModal } from './TemplatePreviewModal';
 import { AdUnit } from './AdUnit';
 
 interface TemplateGalleryProps {
+  isOpen: boolean;
   onClose: () => void;
   onSelectTemplate: (note: Note) => void;
 }
@@ -21,11 +22,13 @@ const CATEGORIES = [
   { id: 'Pessoal', name: 'Pessoal', icon: User },
 ];
 
-export function TemplateGallery({ onClose, onSelectTemplate }: TemplateGalleryProps) {
+export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateGalleryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [previewTemplate, setPreviewTemplate] = useState<{ id: string; title: string; description: string; content: string; category: string } | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  if (!isOpen) return null;
 
   const filteredTemplates = TEMPLATES.filter(template => {
     const matchesSearch = template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

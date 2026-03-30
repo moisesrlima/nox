@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNoxFlow } from '../contexts/NoxFlowContext';
-import { Play, Pause, Radio, Clock, Bell, Timer, Hourglass, X, GripHorizontal } from 'lucide-react';
+import { Play, Pause, Radio, Clock, Bell, Timer, Hourglass, X, GripHorizontal, Volume2 } from 'lucide-react';
 
 export function FloatingNoxFlowWidget() {
   const {
@@ -9,7 +9,8 @@ export function FloatingNoxFlowWidget() {
     isAlarmActive, alarmTime, toggleAlarm,
     stopwatchTime, isStopwatchRunning, pauseStopwatch, startStopwatch, resetStopwatch,
     countdownTime, isCountdownRunning, pauseCountdown, startCountdown, resetCountdown,
-    initialCountdownTime
+    initialCountdownTime,
+    isReading, readingSpeed, setReadingSpeed, startReading, stopReading, pauseReading, resumeReading
   } = useNoxFlow();
 
   const [position, setPosition] = useState({ x: window.innerWidth - 320, y: 80 });
@@ -22,13 +23,15 @@ export function FloatingNoxFlowWidget() {
   const hasActiveAlarm = isAlarmActive;
   const hasActiveStopwatch = isStopwatchRunning || stopwatchTime > 0;
   const hasActiveCountdown = isCountdownRunning || (countdownTime > 0 && countdownTime < initialCountdownTime);
+  const hasActiveReading = isReading;
 
   const activeWidgetsCount = 
     (hasActiveRadio ? 1 : 0) + 
     (hasActiveTimer ? 1 : 0) + 
     (hasActiveAlarm ? 1 : 0) + 
     (hasActiveStopwatch ? 1 : 0) + 
-    (hasActiveCountdown ? 1 : 0);
+    (hasActiveCountdown ? 1 : 0) +
+    (hasActiveReading ? 1 : 0);
 
   const hasActiveWidgets = activeWidgetsCount > 0;
 
@@ -176,6 +179,28 @@ export function FloatingNoxFlowWidget() {
                 {isCountdownRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
               </button>
               <button onClick={resetCountdown} className="p-1.5 bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-full hover:scale-105 transition-transform">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
+        {hasActiveReading && (
+          <div className="flex items-center justify-between bg-[var(--bg-primary)] p-2 rounded-lg border border-[var(--border-color)]/50">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-[var(--accent-primary)]" />
+              <span className="text-xs font-medium truncate max-w-[80px]">Lendo nota...</span>
+            </div>
+            <div className="flex gap-1">
+              <button 
+                onClick={() => isReading ? pauseReading() : resumeReading()} 
+                className="p-1.5 bg-amber-500 text-white rounded-full hover:scale-105 transition-transform"
+              >
+                {isReading ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              </button>
+              <button 
+                onClick={() => stopReading()} 
+                className="p-1.5 bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-full hover:scale-105 transition-transform"
+              >
                 <X className="w-3 h-3" />
               </button>
             </div>
