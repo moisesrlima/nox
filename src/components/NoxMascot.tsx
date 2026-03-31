@@ -132,7 +132,7 @@ export function NoxMascot({ isVisible, onHide, color }: NoxMascotProps) {
       ref={containerRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ 
-        opacity: state === 'leaving' ? 0 : 0.7, 
+        opacity: state === 'leaving' ? 0 : 1, 
         y: position.y,
         x: state === 'leaving' ? (direction === 1 ? window.innerWidth + 100 : -100) : position.x
       }}
@@ -157,11 +157,12 @@ export function NoxMascot({ isVisible, onHide, color }: NoxMascotProps) {
       className="hidden md:block" // Desktop only
     >
       <div style={{ transform: `scaleX(${direction})`, transition: 'transform 0.3s' }}>
-        <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="80" height="60" viewBox="-10 -10 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Body */}
           <motion.path
             d="M10 30 Q 15 15, 35 15 Q 50 15, 50 30"
             stroke={color}
+            fill="var(--bg-primary)"
             strokeWidth="1.5"
             strokeLinecap="round"
             animate={state === 'relaxing' ? { d: "M10 35 Q 25 30, 45 30 Q 55 30, 55 35" } : {}}
@@ -176,10 +177,10 @@ export function NoxMascot({ isVisible, onHide, color }: NoxMascotProps) {
             }
             style={{ originX: '45px', originY: '20px' }}
           >
-            <circle cx="45" cy="20" r="8" stroke={color} strokeWidth="1.5" />
+            <circle cx="45" cy="20" r="8" stroke={color} fill="var(--bg-primary)" strokeWidth="1.5" />
             {/* Ears */}
-            <path d="M39 15 L37 8 L44 13" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
-            <path d="M51 15 L53 8 L46 13" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+            <path d="M39 15 L37 8 L44 13" stroke={color} fill="var(--bg-primary)" strokeWidth="1.5" strokeLinejoin="round" />
+            <path d="M51 15 L53 8 L46 13" stroke={color} fill="var(--bg-primary)" strokeWidth="1.5" strokeLinejoin="round" />
             {/* Eyes */}
             {!isBlinking ? (
               <>
