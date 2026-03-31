@@ -30,3 +30,119 @@ body {
   background-color: var(--primary);
   color: var(--text-primary);
 }
+
+/* Editor Visual Content Styling */
+.editor-visual-content .task-list {
+  list-style: none;
+  padding: 0;
+}
+
+.editor-visual-content .task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.editor-visual-content .task-item input[type="checkbox"] {
+  margin-top: 0.4rem;
+  cursor: pointer;
+}
+
+.editor-visual-content .task-item > div {
+  flex: 1;
+}
+
+/* Kanban Board Layout Logic */
+.editor-visual-content:has(h1:contains("Kanban")),
+.editor-visual-content:has(h1:contains("Quadro")) {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.editor-visual-content:has(h1:contains("Kanban")) h1,
+.editor-visual-content:has(h1:contains("Quadro")) h1 {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.editor-visual-content:has(h1:contains("Kanban")) h2,
+.editor-visual-content:has(h1:contains("Quadro")) h2 {
+  flex: 1;
+  min-width: 250px;
+  background: var(--bg-surface);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-top: 0;
+}
+
+/* We need to make sure the task list following the H2 stays with it */
+/* This is hard with flat Tiptap structure, so we use a more robust approach if possible */
+/* For now, let's ensure the task items are at least aligned correctly */
+
+.editor-visual-content .task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.editor-visual-content .task-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.75rem !important;
+  margin-bottom: 0.5rem;
+}
+
+.editor-visual-content .task-item input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--accent-primary);
+  border-radius: 4px;
+  margin-top: 3px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.editor-visual-content .task-item input[type="checkbox"]:checked {
+  background: var(--accent-primary);
+}
+
+.editor-visual-content .task-item input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.editor-visual-content .task-item[data-checked="true"] > div {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+/* Custom scrollbar for the editor */
+.editor-visual-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editor-visual-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editor-visual-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.editor-visual-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

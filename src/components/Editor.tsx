@@ -67,7 +67,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
       TaskItem.configure({
         nested: true,
         HTMLAttributes: {
-          class: 'task-item',
+          class: 'task-item flex items-start gap-2 my-1',
         },
       }),
       Typography,
@@ -75,10 +75,21 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
         bulletList: {
           keepMarks: true,
           keepAttributes: false,
+          HTMLAttributes: {
+            class: 'list-disc pl-6 space-y-1',
+          },
         },
         orderedList: {
           keepMarks: true,
           keepAttributes: false,
+          HTMLAttributes: {
+            class: 'list-decimal pl-6 space-y-1',
+          },
+        },
+        heading: {
+          HTMLAttributes: {
+            class: 'font-bold text-[var(--text-primary)] mt-6 mb-2',
+          },
         },
         link: {
           openOnClick: false,
@@ -131,7 +142,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
     content: note?.content || '',
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] pb-32',
+        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] p-8 sm:p-12 pb-32 editor-visual-content',
       },
       handleKeyDown: (view, event) => {
         if (event.key === '/') {
