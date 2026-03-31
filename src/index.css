@@ -53,7 +53,8 @@ body {
 }
 
 /* Kanban Board Layout Logic */
-.editor-visual-content.kanban-mode {
+.editor-visual-content:has(h1:contains("Kanban")),
+.editor-visual-content:has(h1:contains("Quadro")) {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -61,12 +62,14 @@ body {
   align-items: flex-start;
 }
 
-.editor-visual-content.kanban-mode h1 {
+.editor-visual-content:has(h1:contains("Kanban")) h1,
+.editor-visual-content:has(h1:contains("Quadro")) h1 {
   width: 100%;
   margin-bottom: 2rem;
 }
 
-.editor-visual-content.kanban-mode h2 {
+.editor-visual-content:has(h1:contains("Kanban")) h2,
+.editor-visual-content:has(h1:contains("Quadro")) h2 {
   flex: 1;
   min-width: 250px;
   background: var(--bg-surface);

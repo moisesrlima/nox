@@ -142,9 +142,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
     content: note?.content || '',
     editorProps: {
       attributes: {
-        class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] p-8 sm:p-12 pb-32 editor-visual-content ${
-          note?.title?.toLowerCase().includes('kanban') || note?.title?.toLowerCase().includes('quadro') ? 'kanban-mode' : ''
-        }`,
+        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] p-8 sm:p-12 pb-32 editor-visual-content',
       },
       handleKeyDown: (view, event) => {
         if (event.key === '/') {
@@ -403,20 +401,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
       }, 0);
     }
   };
-
-  // Update editor classes when title changes (for Kanban mode)
-  useEffect(() => {
-    if (editor) {
-      const isKanban = note?.title?.toLowerCase().includes('kanban') || note?.title?.toLowerCase().includes('quadro');
-      editor.setOptions({
-        editorProps: {
-          attributes: {
-            class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] p-8 sm:p-12 pb-32 editor-visual-content ${isKanban ? 'kanban-mode' : ''}`,
-          },
-        },
-      });
-    }
-  }, [editor, note?.title]);
 
   // Default to visual mode and sync content when switching notes
   useEffect(() => {

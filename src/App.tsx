@@ -8,7 +8,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { NoxFlow } from './components/NoxFlow';
 import { NoxFlowMini } from './components/NoxFlowMini';
 import { FloatingNoxFlowWidget } from './components/FloatingNoxFlowWidget';
-import { NoxMascot } from './components/NoxMascot';
 
 // Lazy load components
 const Editor = lazy(() => import('./components/Editor').then(m => ({ default: m.Editor })));
@@ -30,36 +29,6 @@ export default function App() {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [currentThemeId, setCurrentThemeId] = useLocalStorage<ThemeId>('nox-theme', 'zinc');
-  const [mascotEnabled, setMascotEnabled] = useLocalStorage<boolean>('nox-mascot-enabled', true);
-  const [isMascotVisible, setIsMascotVisible] = useState(false);
-
-  const handleShowMascotNow = () => {
-    if (!mascotEnabled) setMascotEnabled(true);
-    setIsMascotVisible(true);
-  };
-
-  // Mascot appearance logic
-  useEffect(() => {
-    if (!mascotEnabled) {
-      setIsMascotVisible(false);
-      return;
-    }
-
-    // First appearance after 1 minute
-    const firstTimer = setTimeout(() => {
-      setIsMascotVisible(true);
-    }, 60000);
-
-    // Subsequent appearances every 15 minutes
-    const intervalTimer = setInterval(() => {
-      setIsMascotVisible(true);
-    }, 900000);
-
-    return () => {
-      clearTimeout(firstTimer);
-      clearInterval(intervalTimer);
-    };
-  }, [mascotEnabled]);
 
   // Apply theme
   useEffect(() => {
@@ -273,9 +242,6 @@ export default function App() {
           isOpen={isSidebarOpen}
           setIsOpen={setIsSidebarOpen}
           currentThemeId={currentThemeId}
-          mascotEnabled={mascotEnabled}
-          onToggleMascot={setMascotEnabled}
-          onShowMascotNow={handleShowMascotNow}
         />
         
         <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]"><div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div></div>}>
@@ -319,14 +285,6 @@ export default function App() {
             )}
           </ErrorBoundary>
         </Suspense>
-
-        {mascotEnabled && (
-          <NoxMascot 
-            isVisible={isMascotVisible} 
-            onHide={() => setIsMascotVisible(false)} 
-            color={THEMES.find(t => t.id === currentThemeId)?.colors.accent || '#3c61dd'}
-          />
-        )}
       </div>
     </ErrorBoundary>
   );
