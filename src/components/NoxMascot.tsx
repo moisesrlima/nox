@@ -157,91 +157,110 @@ export function NoxMascot({ isVisible, onHide, color }: NoxMascotProps) {
       className="hidden md:block" // Desktop only
     >
       <div style={{ transform: `scaleX(${direction})`, transition: 'transform 0.3s' }}>
-        <svg width="80" height="60" viewBox="-10 -10 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Body */}
-          <motion.path
-            d="M10 30 Q 15 15, 35 15 Q 50 15, 50 30"
-            stroke={color}
-            fill="var(--bg-primary)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            animate={state === 'relaxing' ? { d: "M10 35 Q 25 30, 45 30 Q 55 30, 55 35" } : {}}
-          />
-          
-          {/* Head */}
-          <motion.g
-            animate={
-              state === 'tilting' ? { rotate: [0, -15, 0] } : 
-              state === 'relaxing' ? { y: 5, rotate: -10 } : 
-              isGrooming ? { rotate: [0, 20, 0], x: [-2, 0, -2] } : {}
-            }
-            style={{ originX: '45px', originY: '20px' }}
-          >
-            <circle cx="45" cy="20" r="8" stroke={color} fill="var(--bg-primary)" strokeWidth="1.5" />
-            {/* Ears */}
-            <path d="M39 15 L37 8 L44 13" stroke={color} fill="var(--bg-primary)" strokeWidth="1.5" strokeLinejoin="round" />
-            <path d="M51 15 L53 8 L46 13" stroke={color} fill="var(--bg-primary)" strokeWidth="1.5" strokeLinejoin="round" />
-            {/* Eyes */}
-            {!isBlinking ? (
-              <>
-                <circle cx="42" cy="19" r="1" fill={color} />
-                <circle cx="48" cy="19" r="1" fill={color} />
-              </>
-            ) : (
-              <>
-                <line x1="41" y1="19" x2="43" y2="19" stroke={color} strokeWidth="1" />
-                <line x1="47" y1="19" x2="49" y2="19" stroke={color} strokeWidth="1" />
-              </>
-            )}
-            {/* Nose */}
-            <path d="M44 22 L46 22" stroke={color} strokeWidth="1" />
-          </motion.g>
-
+        <svg width="100" height="80" viewBox="-10 -10 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Tail */}
           <motion.path
-            d="M10 30 Q 5 25, 5 15"
+            d="M20 45 C 10 45, 5 40, 8 25"
             stroke={color}
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinecap="round"
+            fill="none"
             animate={{ 
-              d: [
-                "M10 30 Q 5 25, 5 15",
-                "M10 30 Q 2 28, 0 20",
-                "M10 30 Q 5 25, 5 15"
-              ]
+              d: state === 'relaxing' 
+                ? "M25 55 C 35 60, 55 60, 60 50" 
+                : [
+                    "M20 45 C 10 45, 5 40, 8 25",
+                    "M20 45 C 5 45, 0 35, 5 20",
+                    "M20 45 C 10 45, 5 40, 8 25"
+                  ]
             }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            transition={state === 'relaxing' ? { duration: 0.5 } : { repeat: Infinity, duration: 3, ease: "easeInOut" }}
           />
 
-          {/* Legs */}
+          {/* Body */}
+          <motion.path
+            d="M20 45 C 25 30, 50 30, 65 35"
+            stroke={color}
+            fill="var(--bg-primary)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            animate={state === 'relaxing' ? { d: "M20 55 C 30 45, 55 45, 60 55" } : {}}
+          />
+          
+          {/* Legs - Back */}
           {state !== 'relaxing' && (
             <>
-              <motion.line 
-                x1="15" y1="30" x2="15" y2="38" 
-                stroke={color} strokeWidth="1.5" 
-                animate={state === 'walking' ? { y2: [38, 34, 38], x2: [15, 18, 15] } : {}}
-                transition={{ repeat: Infinity, duration: 0.6 }}
+              <motion.path 
+                d="M25 42 L 22 55" 
+                stroke={color} strokeWidth="2" strokeLinecap="round"
+                animate={state === 'walking' ? { d: ["M25 42 L 22 55", "M25 42 L 30 52", "M25 42 L 22 55"] } : {}}
+                transition={{ repeat: Infinity, duration: 0.8 }}
               />
-              <motion.line 
-                x1="25" y1="30" x2="25" y2="38" 
-                stroke={color} strokeWidth="1.5" 
-                animate={state === 'walking' ? { y2: [34, 38, 34], x2: [25, 22, 25] } : {}}
-                transition={{ repeat: Infinity, duration: 0.6 }}
-              />
-              <motion.line 
-                x1="35" y1="30" x2="35" y2="38" 
-                stroke={color} strokeWidth="1.5" 
-                animate={state === 'walking' ? { y2: [38, 34, 38], x2: [35, 38, 35] } : {}}
-                transition={{ repeat: Infinity, duration: 0.6 }}
-              />
-              <motion.line 
-                x1="45" y1="30" x2="45" y2="38" 
-                stroke={color} strokeWidth="1.5" 
-                animate={state === 'walking' ? { y2: [34, 38, 34], x2: [45, 42, 45] } : {}}
-                transition={{ repeat: Infinity, duration: 0.6 }}
+              <motion.path 
+                d="M35 40 L 38 55" 
+                stroke={color} strokeWidth="2" strokeLinecap="round"
+                animate={state === 'walking' ? { d: ["M35 40 L 38 55", "M35 40 L 32 52", "M35 40 L 38 55"] } : {}}
+                transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }}
               />
             </>
           )}
+
+          {/* Legs - Front */}
+          {state !== 'relaxing' && (
+            <>
+              <motion.path 
+                d="M55 38 L 52 55" 
+                stroke={color} strokeWidth="2" strokeLinecap="round"
+                animate={state === 'walking' ? { d: ["M55 38 L 52 55", "M55 38 L 58 52", "M55 38 L 52 55"] } : {}}
+                transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }}
+              />
+              <motion.path 
+                d="M62 36 L 65 55" 
+                stroke={color} strokeWidth="2" strokeLinecap="round"
+                animate={state === 'walking' ? { d: ["M62 36 L 65 55", "M62 36 L 60 52", "M62 36 L 65 55"] } : {}}
+                transition={{ repeat: Infinity, duration: 0.8, delay: 0.6 }}
+              />
+            </>
+          )}
+
+          {/* Head Group */}
+          <motion.g
+            animate={
+              state === 'tilting' ? { rotate: [0, -15, 0] } : 
+              state === 'relaxing' ? { y: 15, x: -5, rotate: -5 } : 
+              isGrooming ? { rotate: [0, 25, 0], x: [-3, 0, -3] } : {}
+            }
+            style={{ originX: '70px', originY: '30px' }}
+          >
+            {/* Head Shape */}
+            <path
+              d="M60 35 C 60 25, 80 25, 80 35 C 80 45, 60 45, 60 35"
+              stroke={color}
+              fill="var(--bg-primary)"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+            {/* Ears */}
+            <path d="M65 28 L 62 18 L 70 26" stroke={color} fill="var(--bg-primary)" strokeWidth="2" strokeLinejoin="round" />
+            <path d="M75 28 L 78 18 L 70 26" stroke={color} fill="var(--bg-primary)" strokeWidth="2" strokeLinejoin="round" />
+            
+            {/* Eyes */}
+            {!isBlinking ? (
+              <>
+                <circle cx="68" cy="34" r="1.5" fill={color} />
+                <circle cx="76" cy="34" r="1.5" fill={color} />
+              </>
+            ) : (
+              <>
+                <line x1="66" y1="34" x2="70" y2="34" stroke={color} strokeWidth="1.5" />
+                <line x1="74" y1="34" x2="78" y2="34" stroke={color} strokeWidth="1.5" />
+              </>
+            )}
+            
+            {/* Small Nose/Mouth area */}
+            <path d="M71 38 C 72 39, 73 39, 74 38" stroke={color} strokeWidth="1" />
+          </motion.g>
         </svg>
       </div>
     </motion.div>
