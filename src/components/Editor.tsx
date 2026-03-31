@@ -47,7 +47,12 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isUpdatingFromNote = useRef(false);
+  const noteIdRef = useRef(note?.id);
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    noteIdRef.current = note?.id;
+  }, [note?.id]);
 
   const { setReadingText } = useNoxFlow();
 
@@ -163,8 +168,8 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
       },
     },
     onUpdate: ({ editor }) => {
-      if (!isUpdatingFromNote.current) {
-        onUpdateNote(note!.id, { content: editor.getHTML(), updatedAt: Date.now() });
+      if (!isUpdatingFromNote.current && noteIdRef.current) {
+        onUpdateNote(noteIdRef.current, { content: editor.getHTML(), updatedAt: Date.now() });
       }
     },
     autofocus: autoFocus ? 'end' : false,
@@ -386,12 +391,18 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
     }
   };
 
-  // Default to visual mode when switching notes
+  // Default to visual mode and sync content when switching notes
   useEffect(() => {
     if (note) {
       setMode('visual');
+      
+      if (editor && !isUpdatingFromNote.current) {
+        isUpdatingFromNote.current = true;
+        editor.commands.setContent(note.content);
+        isUpdatingFromNote.current = false;
+      }
     }
-  }, [note?.id]);
+  }, [note?.id, editor]);
 
   // Auto-focus editor when note changes or autoFocus prop is true
   useEffect(() => {
