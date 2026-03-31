@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Note, Folder, THEMES } from '../types';
-import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText, Layout, RefreshCcw, Waves } from 'lucide-react';
+import { Plus, Search, Download, Trash2, Info, AlertTriangle, Settings, ChevronUp, Upload, Palette, Share2, Play, Pause, Volume2, Radio, Clock, Coffee, Folder as FolderIcon, ChevronRight, MoreVertical, Edit2, FolderPlus, Sparkles, FileText, Layout, RefreshCcw } from 'lucide-react';
 import { TEMPLATES, createNoteFromTemplate } from '../templates';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
 import { GoogleDriveSync } from './GoogleDriveSync';
@@ -27,7 +27,6 @@ interface SidebarProps {
   onResetData: () => void;
   onOpenThemes: () => void;
   onOpenGallery: () => void;
-  onOpenNoxFlow: () => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   currentThemeId: string;
@@ -52,7 +51,6 @@ export function Sidebar({
   onResetData,
   onOpenThemes,
   onOpenGallery,
-  onOpenNoxFlow,
   isOpen,
   setIsOpen,
   currentThemeId,
@@ -75,7 +73,6 @@ export function Sidebar({
   const isFoldersOpen = openSection === 'folders';
   const isTemplatesOpen = openSection === 'templates';
   const isSettingsOpen = openSection === 'settings';
-  const isNoxFlowOpen = openSection === 'noxflow';
 
   const toggleFolder = (id: string) => {
     setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
@@ -476,32 +473,6 @@ export function Sidebar({
         </div>
 
         <div className="p-4 border-t border-border space-y-3">
-          {/* Nox Flow Section */}
-          <div>
-            <div className="flex items-center justify-between px-2 mb-2">
-              <button 
-                onClick={() => toggleSection('noxflow')}
-                className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-primary)] transition-colors"
-              >
-                <ChevronRight className={`w-3 h-3 transition-transform ${isNoxFlowOpen ? 'rotate-90' : ''}`} />
-                Nox Flow
-              </button>
-              <Waves className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-            </div>
-
-            {isNoxFlowOpen && (
-              <div className="space-y-1">
-                <button
-                  onClick={onOpenNoxFlow}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] transition-all text-xs font-bold shadow-sm"
-                >
-                  <Waves size={16} />
-                  Abrir Nox Flow
-                </button>
-              </div>
-            )}
-          </div>
-
           <button
             onClick={() => toggleSection('settings')}
             className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors ${

@@ -233,12 +233,6 @@ export default function App() {
             setShowNoxFlow(false);
             setIsSidebarOpen(false);
           }}
-          onOpenNoxFlow={() => {
-            setShowNoxFlow(true);
-            setShowTemplateGallery(false);
-            setShowThemeGallery(false);
-            setIsSidebarOpen(false);
-          }}
           isOpen={isSidebarOpen}
           setIsOpen={setIsSidebarOpen}
           currentThemeId={currentThemeId}
