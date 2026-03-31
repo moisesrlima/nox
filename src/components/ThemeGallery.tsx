@@ -101,9 +101,9 @@ export function ThemeGallery({ isOpen, currentThemeId, onSelectTheme, onClose }:
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="col-span-1 h-full"
+                    className="col-span-1"
                   >
-                    <AdUnit slot="THEME_GALLERY_SLOT" className="h-full min-h-[180px]" />
+                    <AdUnit slot="THEME_GALLERY_SLOT" className="h-[220px]" />
                   </motion.div>
                 )}
                 <motion.div
