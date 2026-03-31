@@ -31,6 +31,8 @@ interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   currentThemeId: string;
+  mascotEnabled: boolean;
+  onToggleMascot: (enabled: boolean) => void;
 }
 
 export function Sidebar({
@@ -56,6 +58,8 @@ export function Sidebar({
   isOpen,
   setIsOpen,
   currentThemeId,
+  mascotEnabled,
+  onToggleMascot,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [openSection, setOpenSection] = useState<string | null>('folders');
@@ -527,6 +531,24 @@ export function Sidebar({
               <div>
                 <h4 className="px-3 pb-2 text-xs font-semibold text-text-muted uppercase tracking-wider">Geral</h4>
                 <div className="space-y-1">
+                  <div className="flex items-center justify-between px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors group">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[var(--accent-primary)]" />
+                      <span>Mascote Nox</span>
+                    </div>
+                    <button
+                      onClick={() => onToggleMascot(!mascotEnabled)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                        mascotEnabled ? 'bg-[var(--accent-primary)]' : 'bg-[var(--text-muted)]/30'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                          mascotEnabled ? 'translate-x-5' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                   <button
                     onClick={onOpenThemes}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"
