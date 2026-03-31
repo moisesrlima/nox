@@ -33,6 +33,7 @@ interface SidebarProps {
   currentThemeId: string;
   mascotEnabled: boolean;
   onToggleMascot: (enabled: boolean) => void;
+  onShowMascotNow: () => void;
 }
 
 export function Sidebar({
@@ -60,6 +61,7 @@ export function Sidebar({
   currentThemeId,
   mascotEnabled,
   onToggleMascot,
+  onShowMascotNow,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [openSection, setOpenSection] = useState<string | null>('folders');
@@ -549,6 +551,13 @@ export function Sidebar({
                       />
                     </button>
                   </div>
+                  <button
+                    onClick={onShowMascotNow}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Mostrar Mascote Agora
+                  </button>
                   <button
                     onClick={onOpenThemes}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--accent-primary)] hover:text-[var(--accent-contrast)] rounded-lg transition-colors"

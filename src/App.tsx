@@ -33,6 +33,11 @@ export default function App() {
   const [mascotEnabled, setMascotEnabled] = useLocalStorage<boolean>('nox-mascot-enabled', true);
   const [isMascotVisible, setIsMascotVisible] = useState(false);
 
+  const handleShowMascotNow = () => {
+    if (!mascotEnabled) setMascotEnabled(true);
+    setIsMascotVisible(true);
+  };
+
   // Mascot appearance logic
   useEffect(() => {
     if (!mascotEnabled) {
@@ -270,6 +275,7 @@ export default function App() {
           currentThemeId={currentThemeId}
           mascotEnabled={mascotEnabled}
           onToggleMascot={setMascotEnabled}
+          onShowMascotNow={handleShowMascotNow}
         />
         
         <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]"><div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div></div>}>
