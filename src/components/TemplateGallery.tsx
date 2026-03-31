@@ -101,9 +101,9 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="col-span-1"
+                  className="col-span-1 h-full"
                 >
-                  <AdUnit slot="TEMPLATE_GALLERY_SLOT" />
+                  <AdUnit slot="TEMPLATE_GALLERY_SLOT" className="h-full" />
                 </motion.div>
               )}
               <motion.div
