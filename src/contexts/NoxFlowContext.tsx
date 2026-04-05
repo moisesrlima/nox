@@ -168,6 +168,19 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
             setIsTimerRunning(false);
             if (!isBreak) {
               setSessions(prev => prev + 1);
+              if (Notification.permission === 'granted') {
+                new Notification('Foco Concluído!', {
+                  body: 'Hora de uma pausa! Aproveite os mini games.',
+                  icon: '/favicon.ico'
+                });
+              }
+            } else {
+              if (Notification.permission === 'granted') {
+                new Notification('Pausa Concluída!', {
+                  body: 'Hora de voltar ao foco!',
+                  icon: '/favicon.ico'
+                });
+              }
             }
             return 0;
           }
