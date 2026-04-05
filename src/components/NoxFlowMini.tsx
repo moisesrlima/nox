@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNoxFlow } from '../contexts/NoxFlowContext';
-import { Play, Pause, Volume2, Radio, Clock, Coffee, Bell, Timer, Hourglass, ChevronRight, ChevronDown, Maximize2, X } from 'lucide-react';
+import { Play, Pause, Volume2, Radio, Clock, Coffee, Bell, Timer, Hourglass, ChevronRight, ChevronDown, Maximize2, X, Trophy } from 'lucide-react';
+import { NoxFlowGames } from './NoxFlowGames';
 
 export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOpenFull: () => void }) {
   const {
@@ -246,6 +247,22 @@ export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOp
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mini Games Widget */}
+        <div className="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] overflow-hidden">
+          <button onClick={() => toggleWidget('games')} className="w-full flex items-center justify-between p-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-[var(--accent-primary)]" />
+              Mini Games de Pausa
+            </div>
+            {expandedWidget === 'games' ? <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" /> : <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />}
+          </button>
+          {expandedWidget === 'games' && (
+            <div className="p-1 pt-0 border-t border-[var(--border-color)]/50 mt-1 max-h-[400px] overflow-y-auto">
+              <NoxFlowGames isBreak={isBreak} />
             </div>
           )}
         </div>

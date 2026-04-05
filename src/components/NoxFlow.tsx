@@ -40,9 +40,9 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Lo-Fi Radio */}
-          <div className="lg:col-span-1 bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm">
+          <div className="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm">
             <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6 flex items-center gap-2">
               <Radio className="w-5 h-5 text-[var(--accent-primary)]" />
               Rádio Lo-Fi
@@ -85,7 +85,7 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
           </div>
 
           {/* Pomodoro Timer */}
-          <div className="lg:col-span-1 bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm">
+          <div className="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm">
             <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6 flex items-center gap-2">
               <Clock className="w-5 h-5 text-[var(--accent-primary)]" />
               Foco & Pausa
@@ -133,11 +133,11 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Mini Games Section - Now integrated and more visible */}
-          <div className="lg:col-span-1">
-            <NoxFlowGames isBreak={isBreak} />
-          </div>
+        {/* Mini Games Section - Full Width for visibility */}
+        <div className="w-full">
+          <NoxFlowGames isBreak={isBreak} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

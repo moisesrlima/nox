@@ -607,7 +607,8 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
       };
-      html2pdf().set(opt).from(element).save();
+      await html2pdf().set(opt).from(element).save();
+      // No removeChild needed as element was not appended to body
     } catch (error) {
       console.error('Error exporting PDF:', error);
     }
@@ -687,7 +688,9 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
           height: Math.max(1350, element.scrollHeight),
           windowWidth: 1080
         }).then((canvas) => {
-          document.body.removeChild(element);
+          if (document.body.contains(element)) {
+            document.body.removeChild(element);
+          }
           const dataUrl = canvas.toDataURL('image/png');
           const link = document.createElement('a');
           link.href = dataUrl;
