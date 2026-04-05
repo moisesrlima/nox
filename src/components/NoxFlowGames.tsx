@@ -166,19 +166,22 @@ export function NoxFlowGames({ isBreak }: NoxFlowGamesProps) {
         </div>
       )}
 
-      <div className="flex p-1 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] mb-6">
-        <button 
-          onClick={() => { setGameType('numbers'); initGrid(); }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${gameType === 'numbers' ? 'bg-[var(--bg-surface)] text-[var(--accent-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
-        >
-          <Hash size={16} /> Números
-        </button>
-        <button 
-          onClick={() => { setGameType('emojis'); initGrid(); }}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${gameType === 'emojis' ? 'bg-[var(--bg-surface)] text-[var(--accent-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
-        >
-          <Smile size={16} /> Emojis
-        </button>
+      <div className="mb-6">
+        <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2 block">Selecione o Jogo</label>
+        <div className="flex p-1 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)]">
+          <button 
+            onClick={() => { setGameType('numbers'); initGrid(); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${gameType === 'numbers' ? 'bg-[var(--bg-surface)] text-[var(--accent-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
+          >
+            <Hash size={16} /> Números
+          </button>
+          <button 
+            onClick={() => { setGameType('emojis'); initGrid(); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${gameType === 'emojis' ? 'bg-[var(--bg-surface)] text-[var(--accent-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}
+          >
+            <Smile size={16} /> Emojis
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center">
