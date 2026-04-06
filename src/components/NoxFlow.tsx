@@ -6,12 +6,15 @@ import { NoxFlowGames } from './NoxFlowGames';
 export function NoxFlow({ onClose }: { onClose: () => void }) {
   const {
     isPlaying, currentStation, volume, togglePlayPause, changeStation, setVolume, radioStations,
-    pomodoroTime, setPomodoroTime, isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
+    pomodoroTime, setPomodoroTime, focusDuration, setFocusDuration, breakDuration, setBreakDuration,
+    isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
     alarmTime, setAlarmTime, isAlarmActive, toggleAlarm,
     stopwatchTime, isStopwatchRunning, startStopwatch, pauseStopwatch, resetStopwatch,
     countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown,
     isReading, readingSpeed, setReadingSpeed, startReading, stopReading, pauseReading, resumeReading
   } = useNoxFlow();
+
+  const [showPomodoroConfig, setShowPomodoroConfig] = React.useState(false);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -86,10 +89,59 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
 
           {/* Pomodoro Timer */}
           <div className="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-color)] shadow-sm">
-            <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-[var(--accent-primary)]" />
-              Foco & Pausa
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <Clock className="w-5 h-5 text-[var(--accent-primary)]" />
+                Foco & Pausa
+              </h2>
+              <button 
+                onClick={() => setShowPomodoroConfig(!showPomodoroConfig)}
+                className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                title="Configurar Tempos"
+              >
+                <Timer className="w-5 h-5" />
+              </button>
+            </div>
+
+            {showPomodoroConfig && (
+              <div className="bg-[var(--bg-primary)] p-4 rounded-xl mb-6 border border-[var(--border-color)] space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Tempo de Foco (min)</label>
+                    <input 
+                      type="number" 
+                      value={focusDuration / 60} 
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1;
+                        setFocusDuration(val * 60);
+                        if (!isBreak && !isTimerRunning) setPomodoroTime(val * 60);
+                      }}
+                      className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent-primary)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">Tempo de Pausa (min)</label>
+                    <input 
+                      type="number" 
+                      value={breakDuration / 60} 
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1;
+                        setBreakDuration(val * 60);
+                        if (isBreak && !isTimerRunning) setPomodoroTime(val * 60);
+                      }}
+                      className="w-full bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent-primary)]"
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowPomodoroConfig(false)}
+                  className="w-full py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] text-xs font-bold rounded-lg border border-[var(--border-color)] hover:bg-[var(--bg-hover)] transition-colors"
+                >
+                  Fechar Configurações
+                </button>
+              </div>
+            )}
+
             <div className="text-center mb-8">
               <div className={`text-7xl font-mono font-bold tracking-tight ${isBreak ? 'text-emerald-500' : 'text-[var(--text-primary)]'}`}>
                 {formatTime(pomodoroTime)}
@@ -106,7 +158,7 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
                   className="px-8 py-3 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-xl hover:opacity-90 transition-colors flex items-center gap-2 font-bold"
                 >
                   <Play className="w-5 h-5" /> 
-                  {pomodoroTime === (isBreak ? 5 * 60 : 25 * 60) || pomodoroTime === (isBreak ? 15 * 60 : 30 * 60) ? 'Iniciar' : 'Continuar'} {isBreak ? 'Pausa' : 'Foco'}
+                  {pomodoroTime === (isBreak ? breakDuration : focusDuration) ? 'Iniciar' : 'Continuar'} {isBreak ? 'Pausa' : 'Foco'}
                 </button>
               ) : (
                 <button onClick={pauseTimer} className="px-8 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors flex items-center gap-2 font-bold">
@@ -119,16 +171,16 @@ export function NoxFlow({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => { setIsBreak(false); setPomodoroTime(25 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${!isBreak && pomodoroTime === 25 * 60 ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
+              <button onClick={() => { setIsBreak(false); setFocusDuration(25 * 60); setPomodoroTime(25 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${!isBreak && focusDuration === 25 * 60 ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
                 25m Foco
               </button>
-              <button onClick={() => { setIsBreak(false); setPomodoroTime(30 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${!isBreak && pomodoroTime === 30 * 60 ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
+              <button onClick={() => { setIsBreak(false); setFocusDuration(30 * 60); setPomodoroTime(30 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${!isBreak && focusDuration === 30 * 60 ? 'bg-[var(--accent-primary)] text-[var(--accent-contrast)]' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
                 30m Foco
               </button>
-              <button onClick={() => { setIsBreak(true); setPomodoroTime(5 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${isBreak && pomodoroTime === 5 * 60 ? 'bg-emerald-500 text-white' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
+              <button onClick={() => { setIsBreak(true); setBreakDuration(5 * 60); setPomodoroTime(5 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${isBreak && breakDuration === 5 * 60 ? 'bg-emerald-500 text-white' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
                 5m Pausa
               </button>
-              <button onClick={() => { setIsBreak(true); setPomodoroTime(15 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${isBreak && pomodoroTime === 15 * 60 ? 'bg-emerald-500 text-white' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
+              <button onClick={() => { setIsBreak(true); setBreakDuration(15 * 60); setPomodoroTime(15 * 60); pauseTimer(); }} className={`py-2 text-sm font-bold rounded-lg transition-all ${isBreak && breakDuration === 15 * 60 ? 'bg-emerald-500 text-white' : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)]'}`}>
                 15m Pausa
               </button>
             </div>

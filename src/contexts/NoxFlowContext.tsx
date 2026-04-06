@@ -13,6 +13,10 @@ interface NoxFlowContextType {
   // Timer (Pomodoro)
   pomodoroTime: number;
   setPomodoroTime: (time: number) => void;
+  focusDuration: number;
+  setFocusDuration: (time: number) => void;
+  breakDuration: number;
+  setBreakDuration: (time: number) => void;
   isTimerRunning: boolean;
   isBreak: boolean;
   setIsBreak: (isBreak: boolean) => void;
@@ -120,6 +124,8 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
   };
 
   // --- Timer (Pomodoro) ---
+  const [focusDuration, setFocusDuration] = useState(25 * 60);
+  const [breakDuration, setBreakDuration] = useState(5 * 60);
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
@@ -129,13 +135,13 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
   const startPomodoro = () => {
     setIsTimerRunning(true);
     setIsBreak(false);
-    setPomodoroTime(25 * 60);
+    setPomodoroTime(focusDuration);
   };
 
   const startBreak = () => {
     setIsTimerRunning(true);
     setIsBreak(true);
-    setPomodoroTime(5 * 60);
+    setPomodoroTime(breakDuration);
   };
 
   const resumeTimer = () => {
@@ -153,7 +159,7 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
   const resetTimer = () => {
     setIsTimerRunning(false);
     setIsBreak(false);
-    setPomodoroTime(25 * 60);
+    setPomodoroTime(focusDuration);
     if (pomodoroIntervalRef.current) {
       clearInterval(pomodoroIntervalRef.current);
       pomodoroIntervalRef.current = null;
@@ -174,6 +180,9 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
                   icon: '/favicon.ico'
                 });
               }
+              // Auto-transition to break state but stay paused
+              setIsBreak(true);
+              return breakDuration;
             } else {
               if (Notification.permission === 'granted') {
                 new Notification('Pausa Concluída!', {
@@ -181,8 +190,10 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
                   icon: '/favicon.ico'
                 });
               }
+              // Auto-transition to focus state but stay paused
+              setIsBreak(false);
+              return focusDuration;
             }
-            return 0;
           }
           return time - 1;
         });
@@ -370,7 +381,8 @@ export function NoxFlowProvider({ children }: { children: React.ReactNode }) {
   return (
     <NoxFlowContext.Provider value={{
       isPlaying, currentStation, volume, togglePlayPause, changeStation, setVolume: handleSetVolume, radioStations,
-      pomodoroTime, setPomodoroTime, isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
+      pomodoroTime, setPomodoroTime, focusDuration, setFocusDuration, breakDuration, setBreakDuration,
+      isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
       alarmTime, setAlarmTime, isAlarmActive, toggleAlarm,
       stopwatchTime, isStopwatchRunning, startStopwatch, pauseStopwatch, resetStopwatch,
       countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown,

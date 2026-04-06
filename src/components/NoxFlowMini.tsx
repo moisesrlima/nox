@@ -6,7 +6,8 @@ import { NoxFlowGames } from './NoxFlowGames';
 export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOpenFull: () => void }) {
   const {
     isPlaying, currentStation, volume, togglePlayPause, changeStation, setVolume, radioStations,
-    pomodoroTime, setPomodoroTime, isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
+    pomodoroTime, setPomodoroTime, focusDuration, breakDuration,
+    isTimerRunning, isBreak, setIsBreak, sessions, startPomodoro, startBreak, resumeTimer, pauseTimer, resetTimer,
     alarmTime, setAlarmTime, isAlarmActive, toggleAlarm,
     stopwatchTime, isStopwatchRunning, startStopwatch, pauseStopwatch, resetStopwatch,
     countdownTime, setCountdownTime, initialCountdownTime, isCountdownRunning, setInitialCountdownTime, startCountdown, pauseCountdown, resetCountdown,
@@ -102,13 +103,13 @@ export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOp
               <div className="flex gap-2">
                 {!isTimerRunning ? (
                   <button onClick={() => {
-                    if (pomodoroTime < (isBreak ? 5 * 60 : 25 * 60)) {
+                    if (pomodoroTime < (isBreak ? breakDuration : focusDuration)) {
                       resumeTimer();
                     } else {
                       isBreak ? startBreak() : startPomodoro();
                     }
                   }} className="flex-1 py-1.5 bg-[var(--accent-primary)] text-[var(--accent-contrast)] rounded-lg text-xs font-bold hover:opacity-90 transition-colors flex items-center justify-center gap-1">
-                    <Play className="w-3 h-3" /> {pomodoroTime < (isBreak ? 5 * 60 : 25 * 60) ? 'Continuar' : 'Iniciar'}
+                    <Play className="w-3 h-3" /> {pomodoroTime < (isBreak ? breakDuration : focusDuration) ? 'Continuar' : 'Iniciar'}
                   </button>
                 ) : (
                   <button onClick={pauseTimer} className="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold hover:bg-amber-600 transition-colors flex items-center justify-center gap-1">
