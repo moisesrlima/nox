@@ -1,10 +1,13 @@
 import React from 'react';
 
 interface WelcomeModalProps {
-  onAccept: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function WelcomeModal({ onAccept }: WelcomeModalProps) {
+export function WelcomeModal({ isOpen, onClose }: WelcomeModalProps) {
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-6">
@@ -42,20 +45,56 @@ export function WelcomeModal({ onAccept }: WelcomeModalProps) {
 
           <div className="flex gap-3">
             <div className="flex-shrink-0 mt-0.5">
+              <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </div>
+            <div>
+              <strong className="text-[var(--text-primary)] block">Modo Aula (Voz → Texto)</strong>
+              Transcreva suas ideias em tempo real com o novo comando de voz. Digite "/" no editor para ativar.
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+            </div>
+            <div>
+              <strong className="text-[var(--text-primary)] block">Templates e Temas</strong>
+              Galeria completa de modelos prontos e mais de 15 temas exclusivos para personalizar sua experiência.
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            </div>
+            <div>
+              <strong className="text-[var(--text-primary)] block">Nox Flow</strong>
+              Foque e relaxe com rádio Lo-Fi, Pomodoro, alarmes e leitura de notas por voz integrados.
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 mt-0.5">
               <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <div>
-              <strong className="text-[var(--text-primary)] block">Backup Recomendado</strong>
-              Sem a sincronização, usamos o armazenamento do navegador (sujeito a perda de dados se o cache for limpo). Recomendamos ativar o Google Drive ou exportar backups manualmente.
+              <strong className="text-[var(--text-primary)] block">Backup e Sincronização</strong>
+              Recomendamos ativar o Google Drive para manter suas notas seguras em todos os seus dispositivos.
             </div>
           </div>
         </div>
 
         <div className="space-y-3">
           <button
-            onClick={onAccept}
+            onClick={onClose}
             className="w-full font-medium py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--text-muted)] focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)] bg-[var(--accent-primary)] hover:opacity-90 text-[var(--accent-contrast)]"
           >
             Fechar

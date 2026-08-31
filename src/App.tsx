@@ -1,18 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Sidebar } from './components/Sidebar';
-import { Editor } from './components/Editor';
-import { WelcomeModal } from './components/WelcomeModal';
-import { ResetModal } from './components/ResetModal';
-import { SettingsModal } from './components/SettingsModal';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Note, Folder, INITIAL_NOTE, THEMES, ThemeId } from './types';
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+import { NoxFlow } from './components/NoxFlow';
+import { NoxFlowMini } from './components/NoxFlowMini';
+import { FloatingNoxFlowWidget } from './components/FloatingNoxFlowWidget';
+
+// Lazy load components
+const Editor = lazy(() => import('./components/Editor').then(m => ({ default: m.Editor })));
+const TemplateGallery = lazy(() => import('./components/TemplateGallery').then(m => ({ default: m.TemplateGallery })));
+const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
+const ResetModal = lazy(() => import('./components/ResetModal').then(m => ({ default: m.ResetModal })));
+const ThemeGallery = lazy(() => import('./components/ThemeGallery').then(m => ({ default: m.ThemeGallery })));
 
 export default function App() {
   const [isFirstVisit, setIsFirstVisit] = useLocalStorage('nox-first-visit', true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
+  const [showThemeGallery, setShowThemeGallery] = useState(false);
+  const [showNoxFlow, setShowNoxFlow] = useState(false);
+  const [showNoxFlowMini, setShowNoxFlowMini] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
   const [folders, setFolders] = useLocalStorage<Folder[]>('nox-folders', []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
@@ -35,25 +46,9 @@ export default function App() {
     root.style.setProperty('--border-color', theme.colors.border);
     root.style.setProperty('--app-font', theme.font);
     
-    // Calculate contrast color for accent
-    const isDarkTheme = theme.isDark;
-    const accentContrast = isDarkTheme ? '#FFFFFF' : (theme.id === 'zinc' ? '#FFFFFF' : '#FFFFFF');
-    
-    // For light themes with dark accent (like Olive), we might want white text.
-    // For light themes with light accent, we might want dark text.
-    // But usually, the accent colors provided are meant to have white text on them.
-    // Let's refine this:
-    if (theme.id === 'zinc') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else if (theme.id === 'sapphire') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else if (theme.id === 'olive') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else if (theme.id === 'sakura') {
-      root.style.setProperty('--accent-contrast', '#FFFFFF');
-    } else {
-      root.style.setProperty('--accent-contrast', isDarkTheme ? '#FFFFFF' : '#000000');
-    }
+    // Set accent contrast color
+    // Most of our accent colors are vibrant/dark enough for white text
+    root.style.setProperty('--accent-contrast', '#FFFFFF');
     
     // Update body font
     document.body.style.fontFamily = theme.font;
@@ -161,6 +156,8 @@ export default function App() {
     setNotes((prev) => [template, ...prev]);
     setActiveNoteId(template.id);
     setIsSidebarOpen(false);
+    setShowTemplateGallery(false);
+    setShowThemeGallery(false);
   };
 
   const handleImport = (importedNotes: Note[]) => {
@@ -174,63 +171,115 @@ export default function App() {
   const activeNote = notes.find((n) => n.id === activeNoteId) || null;
 
   return (
-    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
-      {(isFirstVisit || showWelcomeModal) && (
-        <WelcomeModal 
-          onAccept={() => {
-            setIsFirstVisit(false);
-            setShowWelcomeModal(false);
-          }} 
-        />
-      )}
+    <ErrorBoundary>
+      <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
+        <Suspense fallback={null}>
+          {(isFirstVisit || showWelcomeModal) && (
+            <WelcomeModal 
+              isOpen={isFirstVisit || showWelcomeModal}
+              onClose={() => {
+                setIsFirstVisit(false);
+                setShowWelcomeModal(false);
+              }} 
+            />
+          )}
 
-      {showResetModal && (
-        <ResetModal 
-          onConfirm={handleResetData}
-          onCancel={() => setShowResetModal(false)}
-        />
-      )}
-
-      {showSettingsModal && (
-        <SettingsModal
+          {showResetModal && (
+            <ResetModal 
+              isOpen={showResetModal}
+              onConfirm={handleResetData}
+              onClose={() => setShowResetModal(false)}
+            />
+          )}
+        </Suspense>
+        
+        <Sidebar
+          notes={notes}
+          folders={folders}
+          activeNoteId={activeNoteId}
+          onSelectNote={(id) => {
+            setActiveNoteId(id);
+            setIsSidebarOpen(false);
+            setShowTemplateGallery(false);
+            setShowThemeGallery(false);
+            setShowNoxFlow(false);
+          }}
+          onCreateNote={() => {
+            handleCreateNote();
+            setShowTemplateGallery(false);
+            setShowThemeGallery(false);
+            setShowNoxFlow(false);
+          }}
+          onDeleteNote={handleDeleteNote}
+          onCreateFolder={handleCreateFolder}
+          onUpdateFolder={handleUpdateFolder}
+          onDeleteFolder={handleDeleteFolder}
+          onMoveNoteToFolder={handleMoveNoteToFolder}
+          onBackup={handleBackup}
+          onRestore={handleRestore}
+          onImport={handleImport}
+          onImportTemplate={handleImportTemplate}
+          onShowInfo={() => setShowWelcomeModal(true)}
+          onResetData={() => setShowResetModal(true)}
+          onOpenThemes={() => {
+            setShowThemeGallery(true);
+            setShowTemplateGallery(false);
+            setShowNoxFlow(false);
+            setIsSidebarOpen(false);
+          }}
+          onOpenGallery={() => {
+            setShowTemplateGallery(true);
+            setShowThemeGallery(false);
+            setShowNoxFlow(false);
+            setIsSidebarOpen(false);
+          }}
+          isOpen={isSidebarOpen}
+          setIsOpen={setIsSidebarOpen}
           currentThemeId={currentThemeId}
-          onSelectTheme={setCurrentThemeId}
-          onClose={() => setShowSettingsModal(false)}
         />
-      )}
-      
-      <Sidebar
-        notes={notes}
-        folders={folders}
-        activeNoteId={activeNoteId}
-        onSelectNote={(id) => {
-          setActiveNoteId(id);
-          setIsSidebarOpen(false);
-        }}
-        onCreateNote={handleCreateNote}
-        onDeleteNote={handleDeleteNote}
-        onCreateFolder={handleCreateFolder}
-        onUpdateFolder={handleUpdateFolder}
-        onDeleteFolder={handleDeleteFolder}
-        onMoveNoteToFolder={handleMoveNoteToFolder}
-        onBackup={handleBackup}
-        onRestore={handleRestore}
-        onImport={handleImport}
-        onImportTemplate={handleImportTemplate}
-        onShowInfo={() => setShowWelcomeModal(true)}
-        onResetData={() => setShowResetModal(true)}
-        onOpenThemes={() => setShowSettingsModal(true)}
-        isOpen={isSidebarOpen}
-        setIsOpen={setIsSidebarOpen}
-        currentThemeId={currentThemeId}
-      />
-      
-      <Editor
-        note={activeNote}
-        onUpdateNote={handleUpdateNote}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        currentThemeId={currentThemeId}
-      />
-    </div>
+        
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]"><div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div></div>}>
+          <ErrorBoundary>
+            {showNoxFlow ? (
+              <NoxFlow onClose={() => setShowNoxFlow(false)} />
+            ) : showTemplateGallery ? (
+              <TemplateGallery
+                isOpen={showTemplateGallery}
+                onClose={() => setShowTemplateGallery(false)}
+                onSelectTemplate={handleImportTemplate}
+              />
+            ) : showThemeGallery ? (
+              <ThemeGallery
+                isOpen={showThemeGallery}
+                currentThemeId={currentThemeId}
+                onSelectTheme={setCurrentThemeId}
+                onClose={() => setShowThemeGallery(false)}
+              />
+            ) : (
+              <div className="flex-1 flex overflow-hidden">
+                <Editor
+                  note={activeNote}
+                  onUpdateNote={handleUpdateNote}
+                  onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                  onToggleNoxFlowMini={() => setShowNoxFlowMini(!showNoxFlowMini)}
+                  currentThemeId={currentThemeId}
+                  autoFocus={!showWelcomeModal && !isFirstVisit && !showTemplateGallery && !showThemeGallery && !showNoxFlow}
+                />
+                {showNoxFlowMini && (
+                  <NoxFlowMini 
+                    onClose={() => setShowNoxFlowMini(false)} 
+                    onOpenFull={() => {
+                      setShowNoxFlowMini(false);
+                      setShowNoxFlow(true);
+                    }} 
+                  />
+                )}
+                <FloatingNoxFlowWidget />
+              </div>
+            )}
+          </ErrorBoundary>
+        </Suspense>
+      </div>
+    </ErrorBoundary>
   );
 }

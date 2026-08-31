@@ -12,6 +12,8 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string; picture: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [autoSync, setAutoSync] = useState(() => localStorage.getItem('nox_note_auto_sync') === 'true');
+  const [lastSync, setLastSync] = useState<string | null>(() => localStorage.getItem('nox_note_last_sync'));
   const [modalState, setModalState] = useState<{ isOpen: boolean; title: string; message: string; type: 'alert' | 'confirm'; onConfirm?: () => void }>({
     isOpen: false,
     title: '',
@@ -39,10 +41,48 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Auto-sync effect
+  useEffect(() => {
+    if (!autoSync || !isAuthenticated || isSyncing) return;
+
+    const timeoutId = setTimeout(() => {
+      handleBackup(true); // silent backup
+    }, 5000); // 5s debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [notes, folders, autoSync, isAuthenticated]);
+
+  useEffect(() => {
+    localStorage.setItem('nox_note_auto_sync', String(autoSync));
+  }, [autoSync]);
+
   const checkAuthStatus = async () => {
+    console.log('[GDrive] Checking auth status...');
     try {
-      const res = await fetch('/api/auth/status');
-      const data = await res.json();
+      const res = await fetch('/api/gdrive/auth-status', { 
+        cache: 'no-store',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      const text = await res.text();
+      console.log('[GDrive] Auth status response received');
+      
+      if (!res.ok) {
+        console.error('Auth status error response:', text);
+        return;
+      }
+      
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Failed to parse auth status JSON:', text);
+        return;
+      }
+
+      console.log('Auth status data:', data);
       setIsAuthenticated(data.authenticated);
       if (data.user) {
         setUser(data.user);
@@ -55,38 +95,85 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
   };
 
   const handleConnect = async () => {
-    try {
-      const res = await fetch('/api/auth/url');
-      const { url } = await res.json();
-      
-      const authWindow = window.open(
-        url,
-        'oauth_popup',
-        'width=600,height=700'
-      );
+    console.log('handleConnect started');
+    // Open a blank window immediately to avoid popup blockers
+    const authWindow = window.open('about:blank', 'oauth_popup', 'width=600,height=700');
+    
+    if (!authWindow) {
+      console.error('Popup blocked');
+      showAlert('Atenção', 'Por favor, permita popups para conectar sua conta do Google.');
+      return;
+    }
 
-      if (!authWindow) {
-        showAlert('Atenção', 'Por favor, permita popups para conectar sua conta do Google.');
+    try {
+      authWindow.document.write('<div style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 10px;"><h3>Conectando ao Google...</h3><p>Aguarde um momento.</p></div>');
+      
+      console.log('Fetching auth URL...');
+      
+      try {
+        console.log('[GDrive] Fetching auth URL from: /api/gdrive/auth-url');
+        const res = await fetch('/api/gdrive/auth-url', { 
+          cache: 'no-store',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        const text = await res.text();
+        console.log('[GDrive] Auth URL response received. Status:', res.status);
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('Error response body (text):', text);
+          authWindow.close();
+          if (text.includes('FUNCTION_INVOCATION_FAILED') || text.includes('500: INTERNAL_SERVER_ERROR')) {
+            throw new Error('O servidor da Vercel falhou ao processar a requisição (FUNCTION_INVOCATION_FAILED). Verifique os logs da Vercel.');
+          }
+          throw new Error('Resposta do servidor inválida (não é JSON). Verifique se as variáveis de ambiente GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET estão configuradas.');
+        }
+
+        if (!res.ok) {
+          console.error('Auth URL request failed:', data);
+          authWindow.close();
+          throw new Error(data.error || data.message || 'Erro ao obter URL de autenticação');
+        }
+        
+        const { url } = data;
+        console.log('Redirecting popup to:', url);
+        authWindow.location.href = url;
+      } catch (fetchError: any) {
+        console.error('Fetch error details:', fetchError);
+        if (fetchError.name === 'AbortError') {
+          throw new Error('A requisição foi cancelada pelo navegador. Isso pode ser causado por um bloqueador de anúncios ou instabilidade na rede.');
+        }
+        throw fetchError;
       }
+      
     } catch (error) {
-      console.error('Error getting auth URL:', error);
-      showAlert('Erro', 'Erro ao conectar com o Google Drive.');
+      console.error('Error in handleConnect:', error);
+      if (authWindow && !authWindow.closed) {
+        authWindow.close();
+      }
+      showAlert('Erro', error instanceof Error ? error.message : 'Erro ao conectar com o Google Drive.');
     }
   };
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch(`${window.location.origin}/api/gdrive/logout`, { method: 'POST' });
       setIsAuthenticated(false);
       setUser(null);
+      setAutoSync(false);
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
 
-  const handleBackup = async () => {
+  const handleBackup = async (silent = false) => {
     if (!isAuthenticated) return;
-    setIsSyncing(true);
+    if (!silent) setIsSyncing(true);
     try {
       const data = {
         version: 1,
@@ -95,22 +182,42 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
         folders
       };
       
-      const res = await fetch('/api/drive/sync', {
+      const res = await fetch('/api/gdrive/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
         body: JSON.stringify({ data })
       });
       
+      const text = await res.text();
+      let responseData;
+      try {
+        responseData = JSON.parse(text);
+      } catch (e) {
+        console.error('[GDrive] Backup error text:', text);
+        if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+          throw new Error('O servidor da Vercel falhou (FUNCTION_INVOCATION_FAILED).');
+        }
+        throw new Error('Resposta do servidor inválida ao salvar backup.');
+      }
+
       if (res.ok) {
-        showAlert('Sucesso', 'Backup salvo no Google Drive com sucesso!');
+        const now = new Date().toLocaleString();
+        setLastSync(now);
+        localStorage.setItem('nox_note_last_sync', now);
+        if (!silent) showAlert('Sucesso', 'Backup salvo no Google Drive com sucesso!');
       } else {
-        throw new Error('Failed to upload');
+        console.error('[GDrive] Full error response:', responseData);
+        const errorMsg = responseData.message || responseData.error || 'Erro ao salvar no Drive';
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('Error backing up to Drive:', error);
-      showAlert('Erro', 'Erro ao salvar backup no Google Drive.');
+      if (!silent) showAlert('Erro', error instanceof Error ? error.message : 'Erro ao salvar backup no Google Drive.');
     } finally {
-      setIsSyncing(false);
+      if (!silent) setIsSyncing(false);
     }
   };
 
@@ -123,10 +230,30 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       async () => {
         setIsSyncing(true);
         try {
-          const res = await fetch('/api/drive/sync');
-          if (!res.ok) throw new Error('Failed to download');
+          const res = await fetch('/api/gdrive/sync', { 
+            cache: 'no-store',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          });
+          const text = await res.text();
           
-          const { data, message } = await res.json();
+          let responseData;
+          try {
+            responseData = JSON.parse(text);
+          } catch (e) {
+            console.error('[GDrive] Restore error text:', text);
+            if (text.includes('FUNCTION_INVOCATION_FAILED')) {
+              throw new Error('O servidor da Vercel falhou (FUNCTION_INVOCATION_FAILED).');
+            }
+            throw new Error('Resposta do servidor inválida ao restaurar backup.');
+          }
+
+          if (!res.ok) {
+            console.error('[GDrive] Restore error response:', responseData);
+            const errorMsg = responseData.message || responseData.error || 'Erro ao restaurar do Drive';
+            throw new Error(errorMsg);
+          }
+          
+          const { data, message } = responseData;
           if (!data) {
             showAlert('Aviso', message || 'Nenhum backup encontrado no Google Drive.');
             return;
@@ -140,7 +267,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
           }
         } catch (error) {
           console.error('Error restoring from Drive:', error);
-          showAlert('Erro', 'Erro ao restaurar backup do Google Drive.');
+          showAlert('Erro', error instanceof Error ? error.message : 'Erro ao restaurar backup do Google Drive.');
         } finally {
           setIsSyncing(false);
         }
@@ -157,6 +284,7 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       
       {!isAuthenticated ? (
         <button
+          type="button"
           onClick={handleConnect}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors"
         >
@@ -166,16 +294,43 @@ export function GoogleDriveSync({ notes, folders, onRestore }: GoogleDriveSyncPr
       ) : (
         <div className="space-y-1">
           {user && (
-            <div className="px-3 py-2 flex items-center gap-2 text-xs text-text-muted">
-              {user.picture && <img src={user.picture} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />}
-              <span className="truncate flex-1">{user.email}</span>
-              <button onClick={handleLogout} className="p-1 hover:text-error transition-colors" title="Desconectar">
-                <LogOut className="w-3 h-3" />
-              </button>
+            <div className="px-3 py-2 flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-xs text-text-muted">
+                {user.picture && <img src={user.picture} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />}
+                <span className="truncate flex-1">{user.email}</span>
+                <button onClick={handleLogout} className="p-1 hover:text-error transition-colors" title="Desconectar">
+                  <LogOut className="w-3 h-3" />
+                </button>
+              </div>
+              {lastSync && (
+                <span className="text-[10px] text-text-muted italic px-7">
+                  Último sync: {lastSync}
+                </span>
+              )}
             </div>
           )}
+
+          <div className="px-3 py-2 flex items-center justify-between text-sm text-text-secondary">
+            <span className="flex items-center gap-2">
+              <RefreshCw className={`w-4 h-4 ${autoSync ? 'text-accent' : ''}`} />
+              Auto-sync
+            </span>
+            <button
+              onClick={() => setAutoSync(!autoSync)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                autoSync ? 'bg-accent' : 'bg-surface-hover'
+              }`}
+            >
+              <span
+                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                  autoSync ? 'translate-x-5' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
           <button
-            onClick={handleBackup}
+            onClick={() => handleBackup(false)}
             disabled={isSyncing}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:bg-accent hover:text-accent-contrast rounded-lg transition-colors disabled:opacity-50"
           >

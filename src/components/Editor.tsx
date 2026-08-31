@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Note } from '../types';
+import { Note, THEMES } from '../types';
 import { 
   Download, Edit3, Eye, FileText, Menu, FileCode2, FileType2, Type, Code,
   Bold, Italic, Underline as UnderlineIcon, Link as LinkIcon, Search,
   Heading1, Heading2, Heading3, Strikethrough, List, ListOrdered, CheckSquare, Quote, Minus, Table as TableIcon, Image as ImageIcon,
-  HelpCircle, X, Undo, Redo
+  HelpCircle, X, Undo, Redo, Mic, MicOff
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import html2pdf from 'html2pdf.js';
 
 // Tiptap imports
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -29,28 +27,178 @@ import { getSlashCommands, CommandItem } from './EditorCommands';
 import { EditorTopBar } from './EditorTopBar';
 import { EditorBubbleMenu } from './EditorBubbleMenu';
 import { EditorSlashMenu } from './EditorSlashMenu';
-import { readNote, stopReading } from './EditorReading';
+import { useNoxFlow } from '../contexts/NoxFlowContext';
 
 interface EditorProps {
   note: Note | null;
   onUpdateNote: (id: string, updates: Partial<Note>) => void;
   onToggleSidebar: () => void;
+  onToggleNoxFlowMini?: () => void;
   currentThemeId: string;
+  autoFocus?: boolean;
 }
 
-export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: EditorProps) {
+export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMini, currentThemeId, autoFocus }: EditorProps) {
   const [mode, setMode] = useState<'visual' | 'markdown'>('visual');
   const [slashMenu, setSlashMenu] = useState<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showCheatsheet, setShowCheatsheet] = useState(false);
-  const [isReading, setIsReading] = useState(false);
-  const [readingSpeed, setReadingSpeed] = useState<number>(1);
-  const [isGlobalPlaying, setIsGlobalPlaying] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const isUpdatingFromNote = useRef(false);
+  const noteIdRef = useRef(note?.id);
+  const recognitionRef = useRef<any>(null);
 
-  const isDarkTheme = currentThemeId === 'zinc';
+  useEffect(() => {
+    noteIdRef.current = note?.id;
+  }, [note?.id]);
+
+  const { setReadingText } = useNoxFlow();
+
+  // Tiptap Editor
+  const editor = useEditor({
+    extensions: [
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'task-list',
+        },
+      }),
+      TaskItem.configure({
+        nested: true,
+        HTMLAttributes: {
+          class: 'task-item flex items-start gap-2 my-1',
+        },
+      }),
+      Typography,
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+          HTMLAttributes: {
+            class: 'list-disc pl-6 space-y-1',
+          },
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+          HTMLAttributes: {
+            class: 'list-decimal pl-6 space-y-1',
+          },
+        },
+        heading: {
+          HTMLAttributes: {
+            class: 'font-bold text-[var(--text-primary)] mt-6 mb-2',
+          },
+        },
+        link: {
+          openOnClick: false,
+          HTMLAttributes: {
+            class: 'text-blue-500 underline cursor-pointer',
+          },
+        },
+        underline: {},
+      }),
+      Markdown.configure({
+        html: true,
+        tightLists: true,
+        bulletListMarker: '-',
+        linkify: true,
+        breaks: true,
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'rounded-lg max-w-full h-auto my-4 border border-[var(--border-color)]',
+        },
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse table-fixed w-full my-4',
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: 'bg-[var(--bg-surface)] border border-[var(--border-color)] p-2 font-bold text-left',
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-[var(--border-color)] p-2 text-left',
+        },
+      }),
+      Placeholder.configure({
+        placeholder: ({ node }) => {
+          if (node.type.name === 'heading') {
+            return `Título ${node.attrs.level}`;
+          }
+          return 'Comece a escrever ou digite "/" para comandos...';
+        },
+      }),
+    ],
+    content: note?.content || '',
+    editorProps: {
+      attributes: {
+        class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] p-8 sm:p-12 pb-32 editor-visual-content ${
+          note?.title?.toLowerCase().includes('kanban') || note?.title?.toLowerCase().includes('quadro') ? 'kanban-mode' : ''
+        }`,
+      },
+      handleKeyDown: (view, event) => {
+        if (event.key === '/') {
+          const { from } = view.state.selection;
+          const coords = view.coordsAtPos(from);
+          setSlashMenu({ x: coords.left, y: coords.bottom, active: true });
+          setSelectedIndex(0);
+          return false;
+        }
+
+        if (slashMenuRef.current.active) {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setSelectedIndex(prev => (prev + 1) % commandsRef.current.length);
+            return true;
+          }
+          if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setSelectedIndex(prev => (prev - 1 + commandsRef.current.length) % commandsRef.current.length);
+            return true;
+          }
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            handleCommandSelect(commandsRef.current[selectedIndexRef.current].title);
+            return true;
+          }
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            setSlashMenu(prev => ({ ...prev, active: false }));
+            return true;
+          }
+        }
+        return false;
+      },
+    },
+    onUpdate: ({ editor }) => {
+      if (!isUpdatingFromNote.current && noteIdRef.current) {
+        onUpdateNote(noteIdRef.current, { content: editor.getHTML(), updatedAt: Date.now() });
+      }
+    },
+    autofocus: autoFocus ? 'end' : false,
+  });
+
+  useEffect(() => {
+    if (note) {
+      const text = mode === 'visual' && editor 
+        ? editor.getText()
+        : note.content;
+      setReadingText(text);
+    }
+  }, [note?.id, note?.content, mode, editor, setReadingText]);
+
+  const theme = THEMES.find(t => t.id === currentThemeId) || THEMES[0];
+  const isDarkTheme = theme.isDark;
 
   // Use refs to avoid stale closures in Tiptap handlers
   const slashMenuRef = useRef(slashMenu);
@@ -75,6 +223,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
       switch (normalizedType) {
         case 'título 1': case 'h1': editor.commands.setHeading({ level: 1 }); break;
         case 'título 2': case 'h2': editor.commands.setHeading({ level: 2 }); break;
+        case 'modo aula': case 'speech': startSpeechToText(); break;
         case 'lista': case 'list': editor.commands.toggleBulletList(); break;
         case 'checklist': editor.commands.toggleTaskList(); break;
         case 'código': case 'codeblock': editor.commands.toggleCodeBlock(); break;
@@ -97,6 +246,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
       switch (normalizedType) {
         case 'título 1': case 'h1': snippet = '# '; break;
         case 'título 2': case 'h2': snippet = '## '; break;
+        case 'modo aula': case 'speech': startSpeechToText(); return;
         case 'lista': case 'list': snippet = '- '; break;
         case 'checklist': snippet = '- [ ] '; break;
         case 'código': case 'codeblock': snippet = '\n```\n\n```\n'; break;
@@ -121,126 +271,78 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     setSlashMenu(prev => ({ ...prev, active: false }));
   };
 
-  // Tiptap Editor
-  const editor = useEditor({
-    extensions: [
-      TaskList.configure({
-        HTMLAttributes: {
-          class: 'task-list',
-        },
-      }),
-      TaskItem.configure({
-        nested: true,
-        HTMLAttributes: {
-          class: 'task-item',
-        },
-      }),
-      Typography,
-      StarterKit.configure({
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        orderedList: {
-          keepMarks: true,
-          keepAttributes: false,
-        },
-        link: {
-          openOnClick: false,
-          HTMLAttributes: {
-            class: 'text-blue-500 underline cursor-pointer',
-          },
-        },
-        underline: {},
-      }),
-      Markdown.configure({
-        html: true,
-        tightLists: true,
-        bulletListMarker: '-',
-        linkify: true,
-        breaks: true,
-        transformPastedText: true,
-        transformCopiedText: true,
-      }),
-      Image.configure({
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'rounded-xl border border-[var(--border-color)] shadow-sm max-w-full h-auto my-4',
-        },
-      }),
-      Table.configure({
-        resizable: true,
-      }),
-      TableRow,
-      TableHeader,
-      TableCell,
-      Placeholder.configure({
-        placeholder: "Digite '/' para comandos...",
-      }),
-    ],
-    content: note?.content || '',
-    onUpdate: ({ editor }) => {
-      if (note && !isUpdatingFromNote.current) {
-        const markdown = (editor.storage as any).markdown.getMarkdown();
-        onUpdateNote(note.id, { content: markdown, updatedAt: Date.now() });
-      }
-    },
-    editorProps: {
-      attributes: {
-        class: `prose ${isDarkTheme ? 'prose-invert prose-zinc' : 'prose-slate'} max-w-none focus:outline-none min-h-full p-6 prose-pre:bg-[var(--bg-surface)] prose-pre:border prose-pre:border-[var(--border-color)] prose-a:text-[var(--accent-primary)] hover:prose-a:opacity-80 prose-img:rounded-xl prose-img:border prose-img:border-[var(--border-color)]`,
-      },
-      handleKeyDown: (view, event) => {
-        if (event.key === '/') {
-          const { selection } = view.state;
-          const isAtStart = selection.$from.parentOffset === 0;
-          const textBefore = selection.$from.parent.textContent.slice(0, selection.$from.parentOffset);
-          const prevChar = textBefore.slice(-1);
-          const isAfterSpace = prevChar === ' ';
-
-          if (isAtStart || isAfterSpace) {
-            const { from } = selection;
-            const coords = view.coordsAtPos(from);
-            setSlashMenu({ x: coords.left, y: coords.bottom + 5, active: true });
-            setSelectedIndex(0);
-            return false;
-          }
-        }
-        
-        if (slashMenuRef.current.active) {
-          if (event.key === 'ArrowDown') {
-            setSelectedIndex(prev => (prev + 1) % commands.length);
-            return true;
-          }
-          if (event.key === 'ArrowUp') {
-            setSelectedIndex(prev => (prev - 1 + commands.length) % commands.length);
-            return true;
-          }
-          if (event.key === 'Enter') {
-            const cmd = commandsRef.current[selectedIndexRef.current];
-            handleCommandSelect(cmd.title);
-            return true;
-          }
-          if (event.key === 'Escape') {
-            setSlashMenu(prev => ({ ...prev, active: false }));
-            return true;
-          }
-          if (event.key.length === 1 || event.key === 'Backspace') {
-            setSlashMenu(prev => ({ ...prev, active: false }));
-          }
-        }
-        return false;
-      }
-    },
-  });
-
-  // Sync Tiptap when note changes
-  useEffect(() => {
-    if (note && editor && note.content !== (editor.storage as any).markdown.getMarkdown()) {
-      isUpdatingFromNote.current = true;
-      editor.commands.setContent(note.content);
-      isUpdatingFromNote.current = false;
+  const startSpeechToText = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert('Seu navegador não suporta reconhecimento de voz.');
+      return;
     }
-  }, [note?.id, editor]);
+
+    if (isRecording) {
+      stopSpeechToText();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        if (mode === 'visual' && editor) {
+          editor.commands.insertContent(finalTranscript + ' ');
+        } else if (mode === 'markdown' && note) {
+          const newContent = note.content + ' ' + finalTranscript;
+          onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      stopSpeechToText();
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  };
+
+  const stopSpeechToText = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
 
   const handleImageInsert = (isSlash: boolean = false) => {
     const choice = window.confirm('Deseja fazer upload de uma imagem do seu computador? (Clique em Cancelar para inserir via link)');
@@ -302,12 +404,47 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     }
   };
 
-  // Default to visual mode when switching notes
+  // Update editor classes when title changes (for Kanban mode)
+  useEffect(() => {
+    if (editor) {
+      const isKanban = note?.title?.toLowerCase().includes('kanban') || note?.title?.toLowerCase().includes('quadro');
+      editor.setOptions({
+        editorProps: {
+          attributes: {
+            class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] p-8 sm:p-12 pb-32 editor-visual-content ${isKanban ? 'kanban-mode' : ''}`,
+          },
+        },
+      });
+    }
+  }, [editor, note?.title]);
+
+  // Default to visual mode and sync content when switching notes
   useEffect(() => {
     if (note) {
       setMode('visual');
+      
+      if (editor && !isUpdatingFromNote.current) {
+        isUpdatingFromNote.current = true;
+        editor.commands.setContent(note.content);
+        isUpdatingFromNote.current = false;
+      }
     }
-  }, [note?.id]);
+  }, [note?.id, editor]);
+
+  // Auto-focus editor when note changes or autoFocus prop is true
+  useEffect(() => {
+    if (note && autoFocus) {
+      const timer = setTimeout(() => {
+        if (mode === 'visual' && editor) {
+          editor.commands.focus('start');
+        } else if (mode === 'markdown' && textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(0, 0);
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [note?.id, editor, mode, autoFocus]);
 
   if (!note) {
     return (
@@ -429,127 +566,146 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     URL.revokeObjectURL(url);
   };
 
-  const exportPdf = () => {
+  const exportPdf = async () => {
     if (!editor) return;
-    const element = document.createElement('div');
-    element.innerHTML = editor.getHTML();
-    element.style.padding = '20px';
-    element.style.color = '#000';
-    element.style.fontFamily = 'system-ui, sans-serif';
     
-    const watermark = document.createElement('div');
-    watermark.innerHTML = `
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
-        <p><a href="https://nox-note.vercel.app/" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Feito com NoxNote</a></p>
-        <p>qrcode feito com NoxNote</p>
-      </div>
-    `;
-    element.appendChild(watermark);
+    try {
+      // Dynamic import for heavy library
+      const html2pdf = (await import('html2pdf.js')).default;
+      
+      const element = document.createElement('div');
+      element.innerHTML = editor.getHTML();
+      element.style.padding = '20px';
+      element.style.color = '#000';
+      element.style.fontFamily = 'system-ui, sans-serif';
+      
+      const watermark = document.createElement('div');
+      watermark.innerHTML = `
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+          <p><a href="https://nox-note.vercel.app/" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Feito com NoxNote</a></p>
+          <p>qrcode feito com NoxNote</p>
+        </div>
+      `;
+      element.appendChild(watermark);
 
-    const style = document.createElement('style');
-    style.innerHTML = `
-      body { color: #000 !important; background: #fff !important; }
-      pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; }
-      code { font-family: monospace; }
-      blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
-      table { border-collapse: collapse; width: 100%; }
-      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-      th { background-color: #f4f4f4; }
-      hr { break-after: page; page-break-after: always; border: none; margin: 0; height: 0; }
-    `;
-    element.appendChild(style);
-    const opt = {
-      margin: 10,
-      filename: `${note.title || 'nota'}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-    };
-    html2pdf().set(opt).from(element).save();
+      const style = document.createElement('style');
+      style.innerHTML = `
+        body { color: #000 !important; background: #fff !important; }
+        pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; }
+        code { font-family: monospace; }
+        blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        hr { break-after: page; page-break-after: always; border: none; margin: 0; height: 0; }
+      `;
+      element.appendChild(style);
+      const opt = {
+        margin: 10,
+        filename: `${note.title || 'nota'}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+      };
+      await html2pdf().set(opt).from(element).save();
+      // No removeChild needed as element was not appended to body
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+    }
   };
 
-  const exportImage = () => {
+  const exportImage = async () => {
     if (!editor) return;
-    const element = document.createElement('div');
-    element.innerHTML = editor.getHTML();
-    element.style.padding = '60px';
-    element.style.width = '1080px';
-    element.style.minHeight = '1350px';
-    element.style.background = '#fff';
-    element.style.color = '#000';
-    element.style.fontFamily = 'system-ui, sans-serif';
-    element.style.boxSizing = 'border-box';
-    element.style.display = 'flex';
-    element.style.flexDirection = 'column';
     
-    const contentWrapper = document.createElement('div');
-    contentWrapper.style.flex = '1';
-    
-    // Move all children to contentWrapper
-    while (element.firstChild) {
-      contentWrapper.appendChild(element.firstChild);
+    try {
+      // Dynamic import for heavy library
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const element = document.createElement('div');
+      element.innerHTML = editor.getHTML();
+      element.style.padding = '60px';
+      element.style.width = '1080px';
+      element.style.minHeight = '1350px';
+      element.style.background = '#fff';
+      element.style.color = '#000';
+      element.style.fontFamily = 'system-ui, sans-serif';
+      element.style.boxSizing = 'border-box';
+      element.style.display = 'flex';
+      element.style.flexDirection = 'column';
+      
+      const contentWrapper = document.createElement('div');
+      contentWrapper.style.flex = '1';
+      
+      // Move all children to contentWrapper
+      while (element.firstChild) {
+        contentWrapper.appendChild(element.firstChild);
+      }
+      element.appendChild(contentWrapper);
+      
+      const watermark = document.createElement('div');
+      watermark.innerHTML = `
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 16px; color: #666;">
+          <p style="margin: 4px 0;">Baixei esse planner insano no <strong>Nox Note</strong></p>
+          <p style="margin: 4px 0;"><a href="https://nox-note.vercel.app/" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Feito com NoxNote</a></p>
+          <p style="margin: 4px 0; font-size: 12px; opacity: 0.5;">qrcode feito com NoxNote</p>
+        </div>
+      `;
+      element.appendChild(watermark);
+
+      const style = document.createElement('style');
+      style.innerHTML = `
+        body { color: #000 !important; background: #fff !important; }
+        pre { background: #f4f4f4; padding: 1.5rem; border-radius: 8px; font-size: 14px; }
+        code { font-family: monospace; }
+        blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; font-size: 18px; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 16px; }
+        th, td { border: 1px solid #ddd; padding: 16px; text-align: left; }
+        th { background-color: #f4f4f4; font-weight: bold; }
+        img { max-width: 100%; border-radius: 8px; }
+        h1 { font-size: 36px; margin-bottom: 24px; }
+        h2 { font-size: 30px; margin-top: 32px; margin-bottom: 16px; }
+        h3 { font-size: 24px; margin-top: 24px; margin-bottom: 16px; }
+        p, li { font-size: 18px; line-height: 1.6; }
+        ul.task-list { list-style: none; padding: 0; }
+        li.task-item { display: flex; align-items: flex-start; gap: 12px; margin: 8px 0; }
+        li.task-item input { margin-top: 6px; width: 18px; height: 18px; }
+      `;
+      element.appendChild(style);
+
+      // Temporarily append to body to get correct dimensions for html2canvas
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '-9999px';
+      document.body.appendChild(element);
+
+      // Wait a brief moment to ensure styles are applied
+      setTimeout(() => {
+        html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          width: 1080,
+          height: Math.max(1350, element.scrollHeight),
+          windowWidth: 1080
+        }).then((canvas) => {
+          if (document.body.contains(element)) {
+            document.body.removeChild(element);
+          }
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `${note.title || 'nota'}.png`;
+          link.click();
+        }).catch((err) => {
+          console.error('Error exporting image:', err);
+          if (document.body.contains(element)) {
+            document.body.removeChild(element);
+          }
+        });
+      }, 100);
+    } catch (error) {
+      console.error('Error loading export library:', error);
     }
-    element.appendChild(contentWrapper);
-    
-    const watermark = document.createElement('div');
-    watermark.innerHTML = `
-      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 16px; color: #666;">
-        <p style="margin: 4px 0;">Baixei esse planner insano no <strong>Nox Note</strong></p>
-        <p style="margin: 4px 0;"><a href="https://nox-note.vercel.app/" style="color: #3b82f6; text-decoration: none; font-weight: bold;">Feito com NoxNote</a></p>
-        <p style="margin: 4px 0; font-size: 12px; opacity: 0.5;">qrcode feito com NoxNote</p>
-      </div>
-    `;
-    element.appendChild(watermark);
-
-    const style = document.createElement('style');
-    style.innerHTML = `
-      body { color: #000 !important; background: #fff !important; }
-      pre { background: #f4f4f4; padding: 1.5rem; border-radius: 8px; font-size: 14px; }
-      code { font-family: monospace; }
-      blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; font-size: 18px; }
-      table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 16px; }
-      th, td { border: 1px solid #ddd; padding: 16px; text-align: left; }
-      th { background-color: #f4f4f4; font-weight: bold; }
-      img { max-width: 100%; border-radius: 8px; }
-      h1 { font-size: 36px; margin-bottom: 24px; }
-      h2 { font-size: 30px; margin-top: 32px; margin-bottom: 16px; }
-      h3 { font-size: 24px; margin-top: 24px; margin-bottom: 16px; }
-      p, li { font-size: 18px; line-height: 1.6; }
-      ul.task-list { list-style: none; padding: 0; }
-      li.task-item { display: flex; align-items: flex-start; gap: 12px; margin: 8px 0; }
-      li.task-item input { margin-top: 6px; width: 18px; height: 18px; }
-    `;
-    element.appendChild(style);
-
-    // Temporarily append to body to get correct dimensions for html2canvas
-    element.style.position = 'absolute';
-    element.style.left = '-9999px';
-    element.style.top = '-9999px';
-    document.body.appendChild(element);
-
-    // Wait a brief moment to ensure styles are applied
-    setTimeout(() => {
-      html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        width: 1080,
-        height: Math.max(1350, element.scrollHeight),
-        windowWidth: 1080
-      }).then((canvas) => {
-        document.body.removeChild(element);
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `${note.title || 'nota'}.png`;
-        link.click();
-      }).catch((err) => {
-        console.error('Error exporting image:', err);
-        if (document.body.contains(element)) {
-          document.body.removeChild(element);
-        }
-      });
-    }, 100);
   };
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -573,22 +729,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
     }
   };
 
-  const handleGlobalPlayPause = () => {
-    if (isGlobalPlaying) {
-      if (isReading) {
-        stopReading({
-          onReadingChange: setIsReading,
-          onGlobalPlayingChange: setIsGlobalPlaying
-        });
-      }
-      setIsGlobalPlaying(false);
-      window.dispatchEvent(new CustomEvent('radio-control', { detail: { action: 'pause' } }));
-    } else {
-      window.dispatchEvent(new CustomEvent('radio-control', { detail: { action: 'play' } }));
-      setIsGlobalPlaying(true);
-    }
-  };
-
   return (
     <div className="flex-1 flex flex-col h-screen bg-[var(--bg-primary)] overflow-hidden relative">
       <EditorTopBar
@@ -596,36 +736,18 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, currentThemeId }: 
         mode={mode}
         setMode={setMode}
         onToggleSidebar={onToggleSidebar}
+        onToggleNoxFlowMini={onToggleNoxFlowMini}
         onTitleChange={handleTitleChange}
         onExportTxt={exportTxt}
         onExportHtml={exportHtml}
         onExportPdf={exportPdf}
         onExportImage={exportImage}
-        isReading={isReading}
-        readingSpeed={readingSpeed}
-        isGlobalPlaying={isGlobalPlaying}
-        onToggleReading={() => {
-          if (isReading) {
-            stopReading({ onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
-          } else {
-            readNote({ note, mode, editor, speed: readingSpeed, onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
-          }
-        }}
-        onChangeReadingSpeed={() => {
-          const nextSpeed = readingSpeed === 1 ? 2 : readingSpeed === 2 ? 3 : 1;
-          setReadingSpeed(nextSpeed);
-          if (isReading) {
-            stopReading({ onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
-            setTimeout(() => {
-              readNote({ note, mode, editor, speed: nextSpeed, onReadingChange: setIsReading, onGlobalPlayingChange: setIsGlobalPlaying });
-            }, 100);
-          }
-        }}
-        onGlobalPlayPause={handleGlobalPlayPause}
         onUndo={() => editor?.chain().focus().undo().run()}
         onRedo={() => editor?.chain().focus().redo().run()}
         canUndo={editor?.can().undo() ?? false}
         canRedo={editor?.can().redo() ?? false}
+        isRecording={isRecording}
+        onStopRecording={stopSpeechToText}
       />
 
       <div className="flex-1 overflow-hidden relative">
