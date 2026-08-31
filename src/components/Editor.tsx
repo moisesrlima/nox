@@ -22,8 +22,8 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Typography from '@tiptap/extension-typography';
 import Image from '@tiptap/extension-image';
-import { Markdown } from 'tiptap-markdown';
 import { getSlashCommands, CommandItem } from './EditorCommands';
+import { markdownToHtml, htmlToMarkdown } from '../lib/markdown';
 import { EditorTopBar } from './EditorTopBar';
 import { EditorBubbleMenu } from './EditorBubbleMenu';
 import { EditorSlashMenu } from './EditorSlashMenu';
@@ -99,15 +99,6 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
         },
         underline: {},
       }),
-      Markdown.configure({
-        html: true,
-        tightLists: true,
-        bulletListMarker: '-',
-        linkify: true,
-        breaks: true,
-        transformPastedText: true,
-        transformCopiedText: true,
-      }),
       Image.configure({
         HTMLAttributes: {
           class: 'rounded-lg max-w-full h-auto my-4 border border-[var(--border-color)]',
@@ -139,7 +130,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
         },
       }),
     ],
-    content: note?.content || '',
+    content: markdownToHtml(note?.content || ''),
     editorProps: {
       attributes: {
         class: `prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none max-w-none min-h-[500px] p-8 sm:p-12 pb-32 editor-visual-content ${
@@ -182,7 +173,11 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
     },
     onUpdate: ({ editor }) => {
       if (!isUpdatingFromNote.current && noteIdRef.current) {
-        onUpdateNote(noteIdRef.current, { content: editor.getHTML(), updatedAt: Date.now() });
+        // Serializa HTML -> markdown via turndown (ver src/lib/markdown.ts).
+        // Mantemos a fonte da verdade como markdown para que alternar entre
+        // as abas Visual e Markdown nunca perca formatação.
+        const markdown = htmlToMarkdown(editor.getHTML());
+        onUpdateNote(noteIdRef.current, { content: markdown, updatedAt: Date.now() });
       }
     },
     autofocus: autoFocus ? 'end' : false,
@@ -264,7 +259,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
       // Update Tiptap if needed
       if (editor) {
         isUpdatingFromNote.current = true;
-        editor.commands.setContent(newContent);
+        editor.commands.setContent(markdownToHtml(newContent));
         isUpdatingFromNote.current = false;
       }
     }
@@ -392,7 +387,7 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
       
       if (editor) {
         isUpdatingFromNote.current = true;
-        editor.commands.setContent(newContent);
+        editor.commands.setContent(markdownToHtml(newContent));
         isUpdatingFromNote.current = false;
       }
 
@@ -425,7 +420,11 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
       
       if (editor && !isUpdatingFromNote.current) {
         isUpdatingFromNote.current = true;
-        editor.commands.setContent(note.content);
+        // note.content é markdown (guardado via getMarkdown()).
+        // Convertemos para HTML antes do setContent porque tiptap-markdown@0.9
+        // (escrito para Tiptap v2) não parseia markdown de forma fiável em
+        // Tiptap v3. Ver src/lib/markdown.ts para detalhes.
+        editor.commands.setContent(markdownToHtml(note.content || ''));
         isUpdatingFromNote.current = false;
       }
     }
@@ -462,11 +461,12 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
   const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
-    
-    // Sync back to Tiptap
-    if (editor && newContent !== (editor.storage as any).markdown.getMarkdown()) {
+
+    // Sync back to Tiptap (markdown -> editor)
+    // Parse markdown -> HTML ourselves; ver src/lib/markdown.ts.
+    if (editor) {
       isUpdatingFromNote.current = true;
-      editor.commands.setContent(newContent);
+      editor.commands.setContent(markdownToHtml(newContent || ''));
       isUpdatingFromNote.current = false;
     }
 
@@ -508,12 +508,21 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
     const start = textarea.selectionStart;
     const newContent = note.content.substring(0, start) + snippet + note.content.substring(textarea.selectionEnd);
     onUpdateNote(note.id, { content: newContent, updatedAt: Date.now() });
-    
+
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + snippet.length, start + snippet.length);
     }, 0);
   };
+
+  // ---- Visual mode toolbar helpers (Tiptap commands) ----
+  // Returns a CSS class for toolbar buttons: highlights the active state.
+  const tbCls = (active?: boolean) =>
+    `p-1.5 rounded transition-colors ${active ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'}`;
+
+  const canRun = editor?.can().chain().focus().run();
+  const canUndo = editor?.can().undo();
+  const canRedo = editor?.can().redo();
 
   const exportTxt = () => {
     const blob = new Blob([note.content], { type: 'text/plain;charset=utf-8' });
@@ -840,8 +849,48 @@ export function Editor({ note, onUpdateNote, onToggleSidebar, onToggleNoxFlowMin
             </div>
           </div>
         ) : (
-          <div className="w-full h-full overflow-y-auto">
-            <EditorContent editor={editor} />
+          <div className="w-full h-full flex flex-col">
+            {/* Full-width toolbar for Visual mode (Tiptap commands) */}
+            <div className="w-full flex-none bg-[var(--bg-surface)] border-b border-[var(--border-color)] p-2 flex items-center gap-1 overflow-x-auto scrollbar-hide">
+              <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={tbCls(editor.isActive('heading', { level: 1 }))} title="Título 1" disabled={!canRun}><Heading1 className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={tbCls(editor.isActive('heading', { level: 2 }))} title="Título 2" disabled={!canRun}><Heading2 className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={tbCls(editor.isActive('heading', { level: 3 }))} title="Título 3" disabled={!canRun}><Heading3 className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => editor.chain().focus().toggleBold().run()} className={tbCls(editor.isActive('bold'))} title="Negrito (Ctrl+B)" disabled={!canRun}><Bold className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleItalic().run()} className={tbCls(editor.isActive('italic'))} title="Itálico (Ctrl+I)" disabled={!canRun}><Italic className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={tbCls(editor.isActive('underline'))} title="Sublinhado (Ctrl+U)" disabled={!canRun}><UnderlineIcon className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleStrike().run()} className={tbCls(editor.isActive('strike'))} title="Tachado" disabled={!canRun}><Strikethrough className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => {
+                const url = window.prompt('URL do link:', editor.getAttributes('link').href ?? 'https://');
+                if (url === null) return;
+                if (url === '') { editor.chain().focus().extendMarkRange('link').unsetLink().run(); }
+                else { editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run(); }
+              }} className={tbCls(editor.isActive('link'))} title="Link" disabled={!canRun}><LinkIcon className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleCode().run()} className={tbCls(editor.isActive('code'))} title="Código inline" disabled={!canRun}><Code className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={tbCls(editor.isActive('codeBlock'))} title="Bloco de código" disabled={!canRun}><FileCode2 className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={tbCls(editor.isActive('bulletList'))} title="Lista" disabled={!canRun}><List className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={tbCls(editor.isActive('orderedList'))} title="Lista numerada" disabled={!canRun}><ListOrdered className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={tbCls(editor.isActive('taskList'))} title="Checklist (tarefas interativas)" disabled={!canRun}><CheckSquare className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => editor.chain().focus().toggleBlockquote().run()} className={tbCls(editor.isActive('blockquote'))} title="Citação" disabled={!canRun}><Quote className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().setHorizontalRule().run()} className={tbCls(false)} title="Divisor" disabled={!canRun}><Minus className="w-4 h-4" /></button>
+              <button onClick={() => handleImageInsert()} className={tbCls(false)} title="Imagem" disabled={!canRun}><ImageIcon className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().insertContent('<table><tbody><tr><td>Coluna 1</td><td>Coluna 2</td></tr><tr><td>Dado 1</td><td>Dado 2</td></tr></tbody></table><p></p>').run()} className={tbCls(editor.isActive('table'))} title="Tabela" disabled={!canRun}><TableIcon className="w-4 h-4" /></button>
+              <div className="w-px h-4 bg-[var(--border-color)] mx-1" />
+              <button onClick={() => editor.chain().focus().undo().run()} disabled={!canUndo} className={`${tbCls(false)} ${canUndo ? '' : 'opacity-40 cursor-not-allowed'}`} title="Desfazer (Ctrl+Z)"><Undo className="w-4 h-4" /></button>
+              <button onClick={() => editor.chain().focus().redo().run()} disabled={!canRedo} className={`${tbCls(false)} ${canRedo ? '' : 'opacity-40 cursor-not-allowed'}`} title="Refazer (Ctrl+Y)"><Redo className="w-4 h-4" /></button>
+              {/* TOOLBAR_PART2_PLACEHOLDER */}
+              <div className="flex-1" />
+              <button onClick={() => setShowCheatsheet(true)} className="p-1.5 rounded hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center gap-2 text-xs font-medium pr-3" title="Guia de Markdown">
+                <HelpCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Guia Markdown</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <EditorContent editor={editor} />
+            </div>
           </div>
         )}
       </div>

@@ -1,12 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig, loadEnv, splitVendorChunkPlugin} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    plugins: [react(), tailwindcss(), splitVendorChunkPlugin()],
+    plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
@@ -29,7 +29,6 @@ export default defineConfig(({mode}) => {
               '@tiptap/extension-task-item',
               '@tiptap/extension-typography',
               '@tiptap/extension-image',
-              'tiptap-markdown'
             ],
             'vendor-icons': ['lucide-react'],
             'vendor-utils': ['date-fns', 'uuid', 'motion'],
