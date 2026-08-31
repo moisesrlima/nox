@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNoxFlow } from '../contexts/NoxFlowContext';
-import { Play, Pause, Volume2, Radio, Clock, Coffee, Bell, Timer, Hourglass, ChevronRight, ChevronDown, Maximize2, X, Trophy } from 'lucide-react';
+import { Play, Pause, Volume2, Radio, Clock, Coffee, Bell, Timer, Hourglass, ChevronRight, ChevronDown, Maximize2, X, Trophy, Info } from 'lucide-react';
 import { NoxFlowGames } from './NoxFlowGames';
 
-export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOpenFull: () => void }) {
+export function NoxFlowMini({ onClose, onOpenFull, onOpenAbout }: { onClose: () => void, onOpenFull: () => void, onOpenAbout?: () => void }) {
   const {
     isPlaying, currentStation, volume, togglePlayPause, changeStation, setVolume, radioStations,
     pomodoroTime, setPomodoroTime, focusDuration, breakDuration,
@@ -45,6 +45,11 @@ export function NoxFlowMini({ onClose, onOpenFull }: { onClose: () => void, onOp
           <button onClick={onOpenFull} className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors" title="Abrir página completa">
             <Maximize2 className="w-4 h-4" />
           </button>
+          {onOpenAbout && (
+            <button onClick={onOpenAbout} className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors" title="Sobre o AppsForAll">
+              <Info className="w-4 h-4" />
+            </button>
+          )}
           <button onClick={onClose} className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors" title="Fechar painel">
             <X className="w-4 h-4" />
           </button>

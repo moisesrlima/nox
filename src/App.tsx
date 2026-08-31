@@ -8,6 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { NoxFlow } from './components/NoxFlow';
 import { NoxFlowMini } from './components/NoxFlowMini';
 import { FloatingNoxFlowWidget } from './components/FloatingNoxFlowWidget';
+import { AboutModal } from './components/AboutModal';
 
 // Lazy load components
 const Editor = lazy(() => import('./components/Editor').then(m => ({ default: m.Editor })));
@@ -24,6 +25,7 @@ export default function App() {
   const [showThemeGallery, setShowThemeGallery] = useState(false);
   const [showNoxFlow, setShowNoxFlow] = useState(false);
   const [showNoxFlowMini, setShowNoxFlowMini] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
   const [notes, setNotes] = useLocalStorage<Note[]>('nox-notes', [INITIAL_NOTE]);
   const [folders, setFolders] = useLocalStorage<Folder[]>('nox-folders', []);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
@@ -172,6 +174,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <>
       <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden font-sans selection:bg-[var(--bg-hover)] selection:text-[var(--text-primary)]">
         <Suspense fallback={null}>
           {(isFirstVisit || showWelcomeModal) && (
@@ -266,12 +269,13 @@ export default function App() {
                   autoFocus={!showWelcomeModal && !isFirstVisit && !showTemplateGallery && !showThemeGallery && !showNoxFlow}
                 />
                 {showNoxFlowMini && (
-                  <NoxFlowMini 
-                    onClose={() => setShowNoxFlowMini(false)} 
+                  <NoxFlowMini
+                    onClose={() => setShowNoxFlowMini(false)}
                     onOpenFull={() => {
                       setShowNoxFlowMini(false);
                       setShowNoxFlow(true);
-                    }} 
+                    }}
+                    onOpenAbout={() => setShowAboutModal(true)}
                   />
                 )}
                 <FloatingNoxFlowWidget />
@@ -280,6 +284,9 @@ export default function App() {
           </ErrorBoundary>
         </Suspense>
       </div>
+
+    <AboutModal open={showAboutModal} onClose={() => setShowAboutModal(false)} />
+      </>
     </ErrorBoundary>
   );
 }
